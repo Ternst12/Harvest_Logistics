@@ -36,17 +36,18 @@ return (
             strokeWidth={3}
             strokeColor="hotpink"
             onStart={(params) => {
-              console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
+              
             }}
             onReady={result => {
-              console.log(`Distance: ${result.distance} km`)
+             
               props.setDistance(convertMeters(result.distance))
-              console.log(`Duration: ${result.duration} min.`)
+             
               props.setDuration(convertMinuts(result.duration))
               }}        
             onError={(errorMessage) => {
               console.log(errorMessage)
             }}
+            resetOnChange={false}
           />
     )
 }

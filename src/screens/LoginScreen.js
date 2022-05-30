@@ -1,34 +1,23 @@
-import React, {useEffect, useCallback} from "react";
+import React, {useEffect, useCallback, useState} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {View, Text, StyleSheet, TouchableOpacity, Image} from "react-native"
 import { setOrgin, setDriverInformation} from "../redux/Slices";
-import * as Location from "expo-location"
+import LocationTracker from "../helperFunc/locationTracker";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
+import { io } from "socket.io-client";
+import { socketAdress } from "../constants/SocketAdress";
 
 
 const LoginScreen = props => {
 
     const dispatch = useDispatch();
-
-    useEffect(useCallback(() => {
-        (async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-            console.log("not granted")
-            setErrorMsg('Permission to access location was denied');
-            return;
-            }
-    
-            let location = await Location.getCurrentPositionAsync({});
-            dispatch(setOrgin({
-                lat: location.coords.latitude,
-                lng: location.coords.longitude
-            }))
-        })();
-    }), []);
+    const [socket, setSocket] = useState(io(socketAdress))
 
     return (
         <View style={styles.container}>
+            <View style={{position: "absolute", top: 20, right: 20}}>
+                <LocationTracker socket={socket} />
+            </View>
             <TouchableOpacity style={{borderColor:"grey", borderBottomWidth: 1, width: "90%", justifyContent: "center", alignItems: "center", paddingBottom: screenHeight * 0.05 }} onPress={() => {props.navigation.navigate("Home");
                                               dispatch(setDriverInformation("tractor"))  }}>
                 <Image resizeMode="stretch" source={require("../images/icons/tractor.png")} style={styles.icon}/> 

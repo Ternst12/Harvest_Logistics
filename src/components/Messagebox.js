@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { screenWidth, screenHeight } from "../constants/Dimensions";
 import { sendTractorLocation } from "../helperFunc/TractorSocket";
 import { selectOrigin } from "../redux/Slices";
+import { fetchingFilllevel } from "../helperFunc/TractorSocket";
 
 const Messagebox = props => {
 
@@ -31,17 +32,10 @@ const Messagebox = props => {
                     </View>
                     <View style={[styles.buttons, {backgroundColor: "green"}]}>
                         <TouchableOpacity onPress={() => {
-                            props.requestDriver(props.socket, props.setMarkerCord, props.setShowMessagebox, props.showMessageBox)
+                            props.requestDriver(props.socket, props.setMarkerCord, props.setShowMessagebox, props.showMessageBox, props.setCombineArray)
                             props.setShowMessagebox(false)
                             sendTractorLocation(props.socket, origin)
-                            if(Platform.OS == "ios") {
-                                Linking.openURL(`http://maps.apple.com/?daddr=${props.markerCord.lat},${props.markerCord.lng}`)
-                                console.log("apple url = ", `http://maps.apple.com/?daddr=${props.markerCord.lat},${props.markerCord.lng}`)
-                            } else {
-                                const url=  `google.navigation:q=${props.markerCord.lat},${props.markerCord.lng}`
-                                Linking.openURL(url)
-                                console.log("google url = ", `htttps://wwww.google.com/dir/?api=1&destination=${props.markerCord.lat},${props.markerCord.lng}`)
-                            }
+                            fetchingFilllevel(props.socket, props.setShownFillLevel)
                         }}>
                             <Text style={styles.buttonText}>Yes</Text>
                         </TouchableOpacity>

@@ -1,12 +1,23 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { selectDriverInformation } from "../redux/Slices";
+import { selectDriverEmail, selectDriverInformation, selectDriverName } from "../redux/Slices";
 import { View, Text, Pressable } from "react-native";
 import {DrawerContentScrollView, DrawerItemList} from '@react-navigation/drawer';
+import { Auth } from "aws-amplify";
 
 const CustomDrawer = (props) => {
 
   const driverInformation = useSelector(selectDriverInformation)
+  const driverName = useSelector(selectDriverName)
+  const driverEmail = useSelector(selectDriverEmail)
+
+  const signOut = async() => {
+    try {
+      await Auth.signOut()
+    } catch (e) {
+      console.log("Fejl ved logout = ", e)
+    }
+  }
 
   return (
     <DrawerContentScrollView {...props}>
@@ -26,7 +37,7 @@ const CustomDrawer = (props) => {
           }}/>
 
           <View>
-            <Text style={{color: 'white', fontSize: 24}}>Timm Ernst</Text>
+            <Text style={{color: 'white', fontSize: 24}}>{driverName}</Text>
             <Text style={{color: 'lightgrey'}}>Operating a {driverInformation}</Text>
           </View>
         </View>
@@ -49,12 +60,12 @@ const CustomDrawer = (props) => {
         { /* Do more */}
         <Pressable
           onPress={() => {console.warn('Make Money Driving')}}>
-          <Text style={{color: '#dddddd', paddingVertical: 5,}}>Do more with your account</Text>
+          <Text style={{color: '#dddddd', paddingVertical: 5,}}>Garage</Text>
         </Pressable>
 
         {/* Make money */}
         <Pressable onPress={() => {console.warn('Make Money Driving')}}>
-          <Text style={{color: 'white', paddingVertical: 5}}>Make money driving</Text>
+          <Text style={{color: 'white', paddingVertical: 5}}>{driverEmail}</Text>
         </Pressable>
 
 
@@ -63,7 +74,7 @@ const CustomDrawer = (props) => {
       <DrawerItemList {...props}/>
 
       {/* Make money */}
-      <Pressable onPress={() => {console.log("pressed logout"); props.navigation.navigate("Login") }}>
+      <Pressable onPress={() => {signOut()}}>
         <Text style={{padding: 5, paddingLeft: 20}}>Logout</Text>
       </Pressable>
     </DrawerContentScrollView>

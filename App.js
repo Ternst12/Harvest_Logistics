@@ -1,23 +1,19 @@
 import 'react-native-gesture-handler';
-
 import RootNavigator from './src/Navigation/Root';
-import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { StyleSheet, Text, View, TextInput } from 'react-native';
-import io from "socket.io-client"
+import { useEffect } from 'react';
 import { store } from './src/redux/store';
+import { useDispatch } from 'react-redux';
+import { setDriverEmail } from './src/redux/Slices';
 import { Provider } from 'react-redux';
-import { setSocket } from './src/redux/Slices';
+import { Amplify, Auth, API, graphqlOperation, input } from 'aws-amplify'
+import awsconfig from './src/aws-exports'
+import { withAuthenticator } from 'aws-amplify-react-native'
 
-export default function App() {
+Amplify.configure(awsconfig)
+
+function App() {
 
   
- 
-
-
-
-
-
   return (
     <Provider store={store}>
       <RootNavigator />
@@ -25,11 +21,4 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default withAuthenticator(App)

@@ -3,10 +3,10 @@ import {View, Text} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import MapNavigator from "./Map";
 import MapScreen from "../screens/MapScreen";
 import CustomDrawer from "./CostumDrawer";
 import LoginScreen from "../screens/LoginScreen";
+import AuthScreen from "../screens/AuthScreen";
 
 
 const Drawer = createDrawerNavigator();
@@ -50,6 +50,7 @@ const RootNavigator = (props) => {
   return (
     <NavigationContainer>
       <Stack.Navigator>
+        <Stack.Screen name="Auth" component={AuthScreen} options={{headerShown: false}}/>
         <Stack.Screen name="Login" component={LoginScreen} options={{headerShown: false}}/>
      
         <Stack.Screen 

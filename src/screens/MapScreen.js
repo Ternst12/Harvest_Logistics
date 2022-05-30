@@ -1,23 +1,30 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { TextInput, View, StyleSheet, Text, TouchableOpacity, Keyboard, Image, Linking, Platform } from "react-native";
+import { TextInput, View, StyleSheet, Text, TouchableOpacity, Keyboard, Image} from "react-native";
 import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 import { useSelector } from "react-redux";
 import { presenceMessage } from "../helperFunc/CombineSocket";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { findPlaceDebounced, directionsFinder } from "../helperFunc/findPlace";
 import { Directions } from "../components/Directions";
-import { selectOrigin, selectDriverInformation, setTravelTimeInformation} from "../redux/Slices";
+import { selectOrigin, selectDriverInformation, setTravelTimeInformation, selectDriverName} from "../redux/Slices";
 import { io } from "socket.io-client"
 import Messagebox from "../components/Messagebox";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
-import { requestDriver } from "../helperFunc/TractorSocket";
-import { LatLng, LeafletView} from 'react-native-leaflet-view';
+import { requestDriver, sendTractorLocation } from "../helperFunc/TractorSocket";
+import { socketAdress } from "../constants/SocketAdress";
+import { openMaps } from "../helperFunc/openMaps";
+import Colors from "../constants/Colors";
+import FillLevelSlider from "../components/FillLevelSlider";
+import {sendFillLevel} from "../helperFunc/CombineSocket";
+import { set } from "lodash";
 
 
 const MapScreen = (props) => {
 
     const origin = useSelector(selectOrigin)
     const driverInformation = useSelector(selectDriverInformation)
-    const [socket, setSocket] = useState(io("http://192.168.87.132:3000"))
+    const driverName = useSelector(selectDriverName)
+    const [socket, setSocket] = useState(io(socketAdress))
 
     const tractorIcon = require("../images/icons/tractor.png")
     const combineIcon = require("../images/icons/harvester.png")
@@ -31,18 +38,23 @@ const MapScreen = (props) => {
     const [distance, setDistance] = useState(null)
     const [duration, setDuration] = useState(null)
     const [showMessagebox, setShowMessagebox] = useState(false)
+    const [combineArray, setCombineArray] = useState([])
+    const [fillLevel, setFillLevel] = useState(0)
+    const [shownFillLevel, setShownFillLevel] = useState(0)
 
     const mapRef = useRef(null)
 
     useEffect(() => {
+        console.log("combineArray = ", combineArray)
+    }, [combineArray])
+
+    useEffect(() => {
         if(!origin || !markerCord){
-            console.log("Cord = ", origin)
-            console.log("fejl")
             return;
         } else {
-            console.log("succes")
+         
             mapRef.current.fitToSuppliedMarkers(["origin", "destination"], {
-                edgePadding: {top: 200, right: 200, bottom: 200, left: 200}
+                edgePadding: {top: screenWidth > 400 ? 200 : 400, right: 200, bottom: 200, left: 200}
             })
             setShowSearchBar(false)
         }
@@ -50,10 +62,18 @@ const MapScreen = (props) => {
 
     useEffect(() => {
         if(driverInformation == "combine") {
-            presenceMessage(socket, origin, setConnectedToTractor, setMarkerCord)
+            presenceMessage(socket, origin, setConnectedToTractor, setMarkerCord, driverName)
+        } else if (driverInformation == "tractor") {
+            sendTractorLocation(socket, origin)
         }
     }, [origin])
 
+    useEffect(() => {
+        console.log(fillLevel[0])
+        sendFillLevel(socket, fillLevel)
+    }, [fillLevel])
+
+  
     const predictionsField = predictions.map(predictions => { return(
             <TouchableOpacity 
             key={predictions.id} 
@@ -68,7 +88,7 @@ const MapScreen = (props) => {
         props.navigation.setOptions({
             headerRight: () => 
             (driverInformation == "tractor" ? 
-                <TouchableOpacity onPress={() => requestDriver(socket, setMarkerCord, setShowMessagebox, showMessagebox)}>
+                <TouchableOpacity onPress={() =>{console.log("Pressed"); requestDriver(socket, setMarkerCord, setShowMessagebox, showMessagebox, setCombineArray)}}>
                     <Text style={{fontSize: 20, marginRight: 20}}>Find</Text>
                 </TouchableOpacity> : 
                 <View>
@@ -79,13 +99,7 @@ const MapScreen = (props) => {
         })
     })
 
-    const marker = () => {
-        return (
-            <View>
-                <Text>hej</Text>
-            </View>
-        )
-    }
+    
   return (
     <View style={{height: "100%", width: "100%"}}>
       <MapView
@@ -93,8 +107,8 @@ const MapScreen = (props) => {
         onPress={() => {setWriting(false); console.log("pressed")}}
         style={{width: '100%', height: '100%'}}
         provider={PROVIDER_GOOGLE}
-        showsUserLocation={false}
-        mapType="satellite"
+        showsUserLocation={true}
+        mapType="hybrid"
         initialRegion={{
           latitude: origin ? origin.lat : 67.026427,
           longitude: origin ? origin.lng :  19.985735,
@@ -107,13 +121,11 @@ const MapScreen = (props) => {
                 latitude: origin.lat,
                 longitude: origin.lng       
             }}
-            pinColor={"red"}
             title="Origin"
             identifier="origin"
+            style={{opacity: 0}}
         > 
-            <View style={styles.markerIcons}>
-                <Image source={driverInformation == "tractor" ? tractorIcon : combineIcon} resizeMode="stretch" style={{height: "80%", width: "100%"}}/>
-            </View>
+            
         </Marker>:
         null}
         {markerCord && markerCord != "No input yet" ? 
@@ -125,9 +137,18 @@ const MapScreen = (props) => {
             pinColor={"green"}
             title="Destination"
             identifier="destination"
+            style={{width: 400}}
             >
-            <View style={styles.markerIcons}>
-                <Image source={driverInformation == "tractor" ? combineIcon : tractorIcon} resizeMode="stretch" style={{height: "100%", width: "90%"}}/>
+            
+            <View style={{justifyContent: "center", alignItems: "center"}}>
+            {driverInformation == "tractor" ?
+                <View style={styles.markerTextBox}>
+                    <Text>{combineArray.length > 0 ? combineArray[0].Name : ""}</Text>
+                    <Text style={{fontSize: 20, fontWeight: "700"}}>Fill level: {shownFillLevel}%</Text>
+                </View>  : null}
+                <View style={styles.markerIcons}>
+                    <Image source={driverInformation == "tractor" ? combineIcon : tractorIcon} resizeMode="stretch" style={{height: "100%", width: "90%"}}/>
+                </View>
             </View>
         </Marker> 
         : null}
@@ -160,13 +181,29 @@ const MapScreen = (props) => {
                 showMessagebox={showMessagebox}
                 markerCord={markerCord}
                 origin={origin}
+                setCombineArray={setCombineArray}
+                setShownFillLevel={setShownFillLevel}
                />
             </View>:
             null
         }
+        {markerCord && markerCord != "No input yet"  ?
+        <View style={styles.mapIcon}>
+            <MaterialCommunityIcons name="google-maps" size={screenWidth > 400 ? 74 : 44} color={Colors.summerYellow} onLongPress={() => openMaps(markerCord)}/>
+        </View> :
+        null
+        }
+        {driverInformation == "combine" ?
+        <View style={styles.fillLevelSlider}>
+            <FillLevelSlider fillLevel={fillLevel} setFillLevel={setFillLevel} />
+        </View>:
+        null
+        }
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
     markerIcons : {
@@ -201,6 +238,27 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 300,
         right: 50
+    },
+    markerTextBox :{
+        width: screenWidth > 400 ? screenWidth * 0.11 : screenWidth * 0.25,
+        height: screenWidth > 400 ? screenWidth * 0.11 : screenWidth * 0.23,
+        backgroundColor: "white",
+        opacity: 0.5
+    },
+    mapIcon: {
+        position: "absolute",
+        bottom: 30,
+        right: 30
+    },
+    fillLevelSlider: {
+        position: "absolute",
+        top: screenHeight * 0.03,
+        alignItems: "center",
+        width: "100%"
+    }, 
+    combineInfoText : {
+        fontSize: 24,
+        fontWeight: "700"
     }
 
 

@@ -1,12 +1,15 @@
-export const requestDriver = async(socket, setMarkerCord, setShowMessagebox, showMessageBox) => {
+import Combine from "../Model/CombineModel"
+
+export const requestDriver = async(socket, setMarkerCord, setShowMessagebox, showMessageBox, setCombineArray) => {
+    
     socket.on("connect", () => {
         console.log("Din Tractor er forbundet, tillykke")
     })
     socket.emit("combineRequest")
-    socket.on("combineRequest", combineLocation => {
-        console.log("modtager noget retur")
-        console.log("combineLocation = ", combineLocation)
+    socket.on("combineRequest", (combineLocation,combineName) => {
+        console.log("combineLocation = " + combineLocation + " combinename = " + combineName)
         setMarkerCord(combineLocation)
+        setCombineArray(oldArray => [...oldArray, new Combine(combineName, "79%")])
         if(showMessageBox == false) {
         setShowMessagebox(true)
         } else {
@@ -18,5 +21,12 @@ export const requestDriver = async(socket, setMarkerCord, setShowMessagebox, sho
 export const sendTractorLocation = async(socket, origin) =>
 {
     socket.emit("tractorLocation", origin)
-    console.log("sender tractor locations data = ", origin)
+}
+
+export const fetchingFilllevel = async(socket, setFilllevel) => 
+{
+    socket.on("sendingFillLevel", fillData => {
+        console.log("getting fillLevel = ", fillData)
+        setFilllevel(fillData)
+    })
 }
