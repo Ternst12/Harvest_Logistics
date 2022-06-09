@@ -1,10 +1,10 @@
 {
   "version": "1",
   "cognitoConfig": {
-    "identityPoolName": "harvestlogistics954a5fa2_identitypool_954a5fa2",
+    "identityPoolName": "harvestlogisticsf1a9fcc4_identitypool_f1a9fcc4",
     "allowUnauthenticatedIdentities": false,
-    "resourceNameTruncated": "harves954a5fa2",
-    "userPoolName": "harvestlogistics954a5fa2_userpool_954a5fa2",
+    "resourceNameTruncated": "harvesf1a9fcc4",
+    "userPoolName": "harvestlogisticsf1a9fcc4_userpool_f1a9fcc4",
     "autoVerifiedAttributes": [
       "email"
     ],
@@ -31,24 +31,12 @@
     "userpoolClientReadAttributes": [
       "email"
     ],
-    "userpoolClientLambdaRole": "harves954a5fa2_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "harvesf1a9fcc4_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "954a5fa2",
-    "resourceName": "harvestlogistics954a5fa2954a5fa2",
+    "sharedId": "f1a9fcc4",
+    "resourceName": "harvestlogisticsf1a9fcc4",
     "authSelections": "identityPoolAndUserPool",
-    "useDefault": "manual",
-    "thirdPartyAuth": false,
-    "usernameAttributes": [
-      "email"
-    ],
-    "userPoolGroups": false,
-    "adminQueries": false,
-    "triggers": {
-      "PostConfirmation": [
-        "custom"
-      ]
-    },
-    "hostedUI": false,
+    "useDefault": "default",
     "userPoolGroupList": [],
     "serviceName": "Cognito",
     "usernameCaseSensitive": false,

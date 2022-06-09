@@ -1,13 +1,20 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState} from "react"
 import { View, Text, } from "react-native"
 import * as TaskManager from "expo-task-manager"
 import * as Location from "expo-location"
-import { useDispatch } from "react-redux"
-import { setOrgin } from "../redux/Slices"
+
+import { useDispatch, useSelector } from "react-redux"
+import { selectDriverID, setOrgin } from "../redux/Slices"
+
+import { updateVehicle } from "../graphql/mutations";
+import {API, graphqlOperation } from 'aws-amplify'
+
 
 const LocationTracker = props =>{
 
     const {locationTracking, setLocationTraking} = useState("Location tracking of")
+
+    const driverID = useSelector(selectDriverID)
 
     const dispatch = useDispatch()
 
@@ -39,6 +46,8 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
 
     // Start location tracking in foreground
     const startForegroundUpdate = async () => {
+
+
         // Check if foreground permission is granted
         const { granted } = await Location.getForegroundPermissionsAsync()
         if (!granted) {
@@ -58,10 +67,22 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
         location => {
             dispatch(setOrgin({
                 lat: location.coords.latitude,
-                lng: location.coords.longitude
+                lng: location.coords.longitude,
             }))
-        }
-        )
+
+            try {
+                API.graphql(graphqlOperation(updateVehicle, {
+                    input: {
+                        userID: driverID, 
+                        latitude: location.coords.latitude, 
+                        longitude: location.coords.longitude
+                    }
+                    }))
+                } catch (error) {
+                    console.log("Location Update lykkes ikke ", error)
+                }
+            }          
+        )        
     }
 
     // Stop location tracking in foreground
@@ -69,7 +90,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
         foregroundSubscription?.remove()
         dispatch(setOrgin({
             lat: null,
-            lng: null
+            lng: null, 
         }))
     }
 
@@ -121,15 +142,26 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
         }
     }
 
-    useEffect(useCallback(() => {
+    useEffect(async() => {
         const requestPermissions = async () => {
             const foreground = await Location.requestForegroundPermissionsAsync()
-            if (foreground.granted) await Location.requestBackgroundPermissionsAsync()
+            if (foreground.granted) {
+                console.log("foreground permission granted")
+                startForegroundUpdate()
+                const background = await Location.requestBackgroundPermissionsAsync()
+                if(background.granted) {
+                    console.log("background permission granted")
+                    startBackgroundUpdate() 
+                    return;
+                } else {
+                    return;
+                }
+            } else {
+                console.log("Permission not granted = ", foreground)
+            }
           }
           requestPermissions()
-          startForegroundUpdate()
-          startBackgroundUpdate()
-    }), []);
+    }, []);
 
 
     return (

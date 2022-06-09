@@ -7,6 +7,7 @@ import MapScreen from "../screens/MapScreen";
 import CustomDrawer from "./CostumDrawer";
 import LoginScreen from "../screens/LoginScreen";
 import AuthScreen from "../screens/AuthScreen";
+import { screenWidth } from "../constants/Dimensions";
 
 
 const Drawer = createDrawerNavigator();
@@ -24,7 +25,23 @@ const DrawerNavigator = (props) => {
         (props) => (
           <CustomDrawer {...props} />)
       }>
-        <Drawer.Screen name="HomeMap" component={MapScreen} />
+        <Drawer.Screen 
+        name="HomeMap" 
+        component={MapScreen} 
+        options={{
+          title: "Logistics",
+          headerStyle: {
+            backgroundColor: "black",
+            opacity: 0.8
+          },
+          headerTintColor: "white", 
+          headerTitleStyle: {
+            fontWeight: "bold",
+            fontSize: screenWidth > 400 ? 22 : 20
+          }
+
+        }}
+        />
 
         <Drawer.Screen name="Your Trips">
            {() => <DummyScreen name={"Your Trips"} />}

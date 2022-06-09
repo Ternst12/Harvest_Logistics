@@ -1,22 +1,19 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-harvestlogistics-dev-153719-authRole",
-      "UnauthRoleArn": "arn:aws:iam::341533806719:role/amplify-harvestlogistics-dev-153719-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::341533806719:role/amplify-harvestlogistics-dev-153719-authRole",
+      "AuthRoleName": "amplify-harvestlogistics-dev-134205-authRole",
+      "UnauthRoleArn": "arn:aws:iam::341533806719:role/amplify-harvestlogistics-dev-134205-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::341533806719:role/amplify-harvestlogistics-dev-134205-authRole",
       "Region": "eu-north-1",
-      "DeploymentBucketName": "amplify-harvestlogistics-dev-153719-deployment",
-      "UnauthRoleName": "amplify-harvestlogistics-dev-153719-unauthRole",
-      "StackName": "amplify-harvestlogistics-dev-153719",
-      "StackId": "arn:aws:cloudformation:eu-north-1:341533806719:stack/amplify-harvestlogistics-dev-153719/a32809a0-db66-11ec-bb40-0a419e633eaa",
-      "AmplifyAppId": "d1cyepcnebqg76"
+      "DeploymentBucketName": "amplify-harvestlogistics-dev-134205-deployment",
+      "UnauthRoleName": "amplify-harvestlogistics-dev-134205-unauthRole",
+      "StackName": "amplify-harvestlogistics-dev-134205",
+      "StackId": "arn:aws:cloudformation:eu-north-1:341533806719:stack/amplify-harvestlogistics-dev-134205/dd6c1360-e19f-11ec-a427-0a1f5368d8a2",
+      "AmplifyAppId": "d33fie1fg0gwp"
     },
     "categories": {
       "auth": {
-        "harvestlogistics954a5fa2954a5fa2": {}
-      },
-      "function": {
-        "harvestlogistics954a5fa2954a5fa2PostConfirmation": {}
+        "harvestlogisticsf1a9fcc4": {}
       }
     }
   }

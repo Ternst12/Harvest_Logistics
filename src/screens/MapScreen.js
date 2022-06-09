@@ -2,97 +2,128 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { TextInput, View, StyleSheet, Text, TouchableOpacity, Keyboard, Image} from "react-native";
 import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 import { useSelector } from "react-redux";
-import { presenceMessage } from "../helperFunc/CombineSocket";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { findPlaceDebounced, directionsFinder } from "../helperFunc/findPlace";
 import { Directions } from "../components/Directions";
-import { selectOrigin, selectDriverInformation, setTravelTimeInformation, selectDriverName} from "../redux/Slices";
+import { selectOrigin, selectDriverInformation, selectDriverName, selectDriverID} from "../redux/Slices";
 import { io } from "socket.io-client"
 import Messagebox from "../components/Messagebox";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
-import { requestDriver, sendTractorLocation } from "../helperFunc/TractorSocket";
 import { socketAdress } from "../constants/SocketAdress";
 import { openMaps } from "../helperFunc/openMaps";
 import Colors from "../constants/Colors";
 import FillLevelSlider from "../components/FillLevelSlider";
-import {sendFillLevel} from "../helperFunc/CombineSocket";
-import { set } from "lodash";
-
+import { API, graphqlOperation} from "aws-amplify";
+import { listVehicles } from "../graphql/queries";
+import { createConnection } from "../graphql/mutations";
+import { onUpdateVehicle, onCreateConnection } from "../graphql/subscriptions";
+import { hide } from "../helperFunc/navigationbarFunctions";
+import InformationWhitebox from "../components/InformationWhiteBox";
 
 const MapScreen = (props) => {
 
+    const driverID = useSelector(selectDriverID)
+
     const origin = useSelector(selectOrigin)
     const driverInformation = useSelector(selectDriverInformation)
-    const driverName = useSelector(selectDriverName)
-    const [socket, setSocket] = useState(io(socketAdress))
 
-    const tractorIcon = require("../images/icons/tractor.png")
-    const combineIcon = require("../images/icons/harvester.png")
+    const tractorIcon = require("../images/icons/logistics_tractor.png")
+    const combineIcon = require("../images/icons/logistics_combine.png")
 
-    const [destination, setDestination] = useState(null);
-    const [writing, setWriting] = useState(false)
-    const [predictions, setPredictions] = useState([])
     const [markerCord, setMarkerCord] = useState(null)
-    const [showSearchBar, setShowSearchBar] = useState(false)
+    const [selectedVehicleID, setSelectedVehicleID] = useState(null)
     const [connectedToTractor, setConnectedToTractor] = useState(false)
-    const [distance, setDistance] = useState(null)
-    const [duration, setDuration] = useState(null)
+    const [distance, setDistance] = useState("")
+    const [duration, setDuration] = useState("")
     const [showMessagebox, setShowMessagebox] = useState(false)
-    const [combineArray, setCombineArray] = useState([])
     const [fillLevel, setFillLevel] = useState(0)
     const [shownFillLevel, setShownFillLevel] = useState(0)
+    const [choosenMarkerTitle, setChoosenMarkerTitle] = useState("")
+    const [operationStarted, setOperationStarted] = useState(false)
+
+    const [vehicle, setVehicle] = useState([])
 
     const mapRef = useRef(null)
 
     useEffect(() => {
-        console.log("combineArray = ", combineArray)
-    }, [combineArray])
+        hide();
+        const subscription = API.graphql(graphqlOperation(onCreateConnection, {driverTwo_UserID: driverID}))
+            .subscribe({
+                next: ({ value }) => {
+                    setConnectedToTractor(true)
+                    console.log("There has been created a connection = ", value.data.onCreateConnection.driverTwo_UserID, " my userID is = ", driverID)
+                    if(driverID == value.data.onCreateConnection.driverTwo_UserID) {
+                        subscribeToVehicle(value.data.onCreateConnection.driverOne_UserID)
+                        fetchVehicles()
+                        setChoosenMarkerTitle(value.data.onCreateConnection.driverOne_UserProfile.email)
+                    }
+                },
+                error: error => console.warn(error)
+            })
+    }, [])
+
+    const createConnectionToVehicle = async(driverID, selectedVehicleID) => {
+       const response = await API.graphql(graphqlOperation(createConnection, {
+           input: {driverOne_UserID: driverID, driverTwo_UserID: selectedVehicleID}
+        }))
+    }
+
+    const fetchVehicles = async () => {
+        try {
+            const response = await API.graphql(
+                graphqlOperation(listVehicles)
+                )
+            var allVehicles = response.data.listVehicles.items
+            var filteredVehicles = allVehicles.filter((item) => item.userID != driverID)
+            console.log("filtered = ", filteredVehicles)
+            setVehicle(filteredVehicles) //sortere brugeren fra listen, så det kun er en liste over andre brugere
+        } catch(error) {
+            console.log("problemer med at fetche = ", error)
+        }
+    }
+
+    const subscribeToVehicle = (userID) => {
+        setOperationStarted(true)
+        const subscription = API.graphql(
+            graphqlOperation(onUpdateVehicle, {userID: userID})
+          ).subscribe({
+            next: ({ value }) => {
+              
+                if(userID == value.data.onUpdateVehicle.userID)
+                {
+                    
+                    setMarkerCord({
+                        lat: value.data.onUpdateVehicle.latitude,
+                        lng: value.data.onUpdateVehicle.longitude
+                    })
+                    if(value.data.onUpdateVehicle.type != "tractor"){
+                    setFillLevel(value.data.onUpdateVehicle.fillLevel)
+                    }
+                }
+            },
+            error: error => console.warn(error)
+          })    
+    }
+
 
     useEffect(() => {
         if(!origin || !markerCord){
             return;
         } else {
-         
-            mapRef.current.fitToSuppliedMarkers(["origin", "destination"], {
+            mapRef.current.fitToSuppliedMarkers(["origin", choosenMarkerTitle], {
                 edgePadding: {top: screenWidth > 400 ? 200 : 400, right: 200, bottom: 200, left: 200}
             })
-            setShowSearchBar(false)
         }
     }, [origin, markerCord])
-
-    useEffect(() => {
-        if(driverInformation == "combine") {
-            presenceMessage(socket, origin, setConnectedToTractor, setMarkerCord, driverName)
-        } else if (driverInformation == "tractor") {
-            sendTractorLocation(socket, origin)
-        }
-    }, [origin])
-
-    useEffect(() => {
-        console.log(fillLevel[0])
-        sendFillLevel(socket, fillLevel)
-    }, [fillLevel])
-
-  
-    const predictionsField = predictions.map(predictions => { return(
-            <TouchableOpacity 
-            key={predictions.id} 
-            style={{backgroundColor: "white", height: 35, justifyContent: "center", paddingHorizontal: 10, width: 300}}
-            onPress={() => {directionsFinder(predictions.place_id, origin, setMarkerCord, setPredictions); Keyboard.dismiss()}}
-            >
-                <Text key={predictions.id} style={{fontSize: 18, color: "grey"}}>{predictions.description}</Text>
-            </TouchableOpacity>
-        )});  
 
     useLayoutEffect(() => {
         props.navigation.setOptions({
             headerRight: () => 
             (driverInformation == "tractor" ? 
-                <TouchableOpacity onPress={() =>{console.log("Pressed"); requestDriver(socket, setMarkerCord, setShowMessagebox, showMessagebox, setCombineArray)}}>
-                    <Text style={{fontSize: 20, marginRight: 20}}>Find</Text>
+                <TouchableOpacity onPress={() =>{fetchVehicles() /* requestDriver(socket, setMarkerCord, setShowMessagebox, showMessagebox, setCombineArray)} */}}>
+                    <Text style={{fontSize: screenWidth > 400 ? 22 : 20, marginRight: 20, color: "white"}}>Find</Text>
                 </TouchableOpacity> : 
                 <View>
-                    <Text style={{fontSize: 20, marginRight: 20}}>{connectedToTractor ? "Connected" : "No connection"}</Text>
+                    <Text style={{fontSize: screenWidth > 400 ? 22 : 20, marginRight: 20, color: "white"}}>{connectedToTractor ? "Connected" : "No connection"}</Text>
                 </View>
             )
              
@@ -103,8 +134,8 @@ const MapScreen = (props) => {
   return (
     <View style={{height: "100%", width: "100%"}}>
       <MapView
+        
         ref={mapRef}
-        onPress={() => {setWriting(false); console.log("pressed")}}
         style={{width: '100%', height: '100%'}}
         provider={PROVIDER_GOOGLE}
         showsUserLocation={true}
@@ -115,73 +146,65 @@ const MapScreen = (props) => {
           latitudeDelta: 0.0222,
           longitudeDelta: 0.0121,
         }}>
-        {origin ? 
-        <Marker 
-            coordinate={{
-                latitude: origin.lat,
-                longitude: origin.lng       
-            }}
-            title="Origin"
-            identifier="origin"
-            style={{opacity: 0}}
-        > 
-            
-        </Marker>:
-        null}
-        {markerCord && markerCord != "No input yet" ? 
-        <Marker 
-            coordinate={{
-                latitude: markerCord.lat,
-                longitude: markerCord.lng
-            }}
-            pinColor={"green"}
-            title="Destination"
-            identifier="destination"
-            style={{width: 400}}
-            >
-            
-            <View style={{justifyContent: "center", alignItems: "center"}}>
-            {driverInformation == "tractor" ?
-                <View style={styles.markerTextBox}>
-                    <Text>{combineArray.length > 0 ? combineArray[0].Name : ""}</Text>
-                    <Text style={{fontSize: 20, fontWeight: "700"}}>Fill level: {shownFillLevel}%</Text>
-                </View>  : null}
-                <View style={styles.markerIcons}>
-                    <Image source={driverInformation == "tractor" ? combineIcon : tractorIcon} resizeMode="stretch" style={{height: "100%", width: "90%"}}/>
-                </View>
-            </View>
-        </Marker> 
-        : null}
+
+        <Marker
+        title="origin"
+        identifier="origin"
+        coordinate={{latitude: origin.lat, longitude: origin.lng}}
+        opacity={0}
+        >
+
+        </Marker>
+
+        {vehicle.map((vehicle) => { 
+                return(
+                        <Marker
+                        key={vehicle.id}
+                        coordinate={{latitude: markerCord ? markerCord.lat : vehicle.latitude, longitude: markerCord ? markerCord.lng : vehicle.longitude}}
+                        onPress={() => {
+                            setMarkerCord({
+                                lat: vehicle.latitude,
+                                lng: vehicle.longitude
+                            })
+                            setChoosenMarkerTitle(vehicle.userMail)
+                            setSelectedVehicleID(vehicle.userID)
+                            setShowMessagebox(true)
+                        }}
+                        title={vehicle.userMail}
+                        identifier={vehicle.userMail}
+                        >
+                        
+                                <Image
+                                    style={{
+                                    width: 70,
+                                    height: 70,
+                                    resizeMode: 'contain',
+                                    }}
+                                    source={vehicle.type == "tractor" ? tractorIcon : combineIcon}
+                                />
+                
+                        </Marker>
+                )
+      })}
          {markerCord && markerCord != "No input yet"  ? 
          <Directions location={origin} markerCord={markerCord} setDistance={setDistance} setDuration={setDuration}/>
         : null}
         </MapView>
     
-        {showSearchBar ? <View style={{position: "absolute", width: "100%", alignItems: "center", height: "50%", top: "5%"}}>
-            <TextInput placeholder="Destination" value={destination} onFocus={() => {
-                setWriting(true)
-            }} 
-            onChangeText={(text) => {
-            setWriting(true)
-            setDestination(text)
-            findPlaceDebounced(text, origin, setPredictions)
-            }} style={[styles.inputBox, writing ? styles.inputBoxShadow : null]} />
-            {predictionsField}
-        </View> : <View></View>
-        }
-        {showMessagebox && driverInformation == "tractor" ? 
+        {showMessagebox ? 
             <View style={{position: "absolute", top: "40%", left: screenWidth > 400 ? "25%" : "15%"}}>
                 <Messagebox 
                 setShowMessagebox={setShowMessagebox}
                 duration={duration} 
                 distance={distance}
-                requestDriver={requestDriver}
-                socket={socket}
                 setMarkerCord={setMarkerCord}
                 showMessagebox={showMessagebox}
                 markerCord={markerCord}
                 origin={origin}
-                setCombineArray={setCombineArray}
+                driverID={driverID}
+                subscribeToVehicle={subscribeToVehicle}
+                createConnectionToVehicle={createConnectionToVehicle}
+                selectedVehicleID={selectedVehicleID}
                 setShownFillLevel={setShownFillLevel}
                />
             </View>:
@@ -195,8 +218,13 @@ const MapScreen = (props) => {
         }
         {driverInformation == "combine" ?
         <View style={styles.fillLevelSlider}>
-            <FillLevelSlider fillLevel={fillLevel} setFillLevel={setFillLevel} />
+            <FillLevelSlider fillLevel={fillLevel} setFillLevel={setFillLevel} driverID={driverID}/>
         </View>:
+        null
+        }
+        {operationStarted ?
+       <InformationWhitebox driverInformation={driverInformation} distance={distance} duration={duration} fillLevel={fillLevel}/>
+        :
         null
         }
     </View>

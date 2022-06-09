@@ -1,18 +1,35 @@
 import 'react-native-gesture-handler';
 import RootNavigator from './src/Navigation/Root';
-import { useEffect } from 'react';
 import { store } from './src/redux/store';
-import { useDispatch } from 'react-redux';
-import { setDriverEmail } from './src/redux/Slices';
 import { Provider } from 'react-redux';
-import { Amplify, Auth, API, graphqlOperation, input } from 'aws-amplify'
+import { Amplify} from 'aws-amplify'
 import awsconfig from './src/aws-exports'
 import { withAuthenticator } from 'aws-amplify-react-native'
+import {useEffect} from "react"
+import {Platform} from "react-native"
+import * as NavigationBar from 'expo-navigation-bar';
+import {hide} from "./src/helperFunc/navigationbarFunctions"
 
 Amplify.configure(awsconfig)
 
 function App() {
-
+  
+  useEffect(() => {
+    hide()
+    if(Platform.OS == "android") {
+      setInterval(async() => {
+      const visibilityCheck = await NavigationBar.getVisibilityAsync();
+      if(visibilityCheck == "visible")
+      {
+        hide()
+      } else {
+        return;
+      }
+      }, 7000
+      )}
+      
+      }, [])
+ 
   
   return (
     <Provider store={store}>

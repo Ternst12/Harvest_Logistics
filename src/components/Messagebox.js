@@ -1,24 +1,22 @@
 import React from "react";
 import { View, Text, StyleSheet, Linking, Platform } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
-import { useSelector } from "react-redux";
 import { screenWidth, screenHeight } from "../constants/Dimensions";
-import { sendTractorLocation } from "../helperFunc/TractorSocket";
-import { selectOrigin } from "../redux/Slices";
-import { fetchingFilllevel } from "../helperFunc/TractorSocket";
+
+
 
 const Messagebox = props => {
 
-
-    const origin = useSelector(selectOrigin)
+    const newDurationText = props.duration.split("\n")
+    const newDistanceText = props.distance.split("\n")
 
     return(
         <View style={styles.boxContainer}>
             <View style={styles.backgroundStyling}></View>
             <View style={{position: "absolute", top: "25%", width: "80%", alignItems: "center"}}>
                 <View style={{width: "70%", justifyContent: "space-around", marginBottom: 10, marginTop: screenWidth > 400 ?  "-10%" : "-15%"}}>
-                    <Text>Duration: {props.duration}</Text>
-                    <Text>Distance: {props.distance}</Text>
+                    <Text>Duration: {newDurationText}</Text>
+                    <Text>Distance: {newDistanceText}</Text>
                 </View>
                 <Text style={{textAlign: "center", fontSize: 16, fontWeight: "500"}}>Do you want to share your location with the combine and start the operation?</Text>
                 <View style={{flexDirection: "row", width: "80%", marginBottom: 10, height: "100%", justifyContent: "space-between", marginTop: "10%"}}>
@@ -32,10 +30,9 @@ const Messagebox = props => {
                     </View>
                     <View style={[styles.buttons, {backgroundColor: "green"}]}>
                         <TouchableOpacity onPress={() => {
-                            props.requestDriver(props.socket, props.setMarkerCord, props.setShowMessagebox, props.showMessageBox, props.setCombineArray)
-                            props.setShowMessagebox(false)
-                            sendTractorLocation(props.socket, origin)
-                            fetchingFilllevel(props.socket, props.setShownFillLevel)
+                            props.subscribeToVehicle(props.selectedVehicleID)
+                            props.createConnectionToVehicle(props.driverID, props.selectedVehicleID) 
+                            props.setShowMessagebox(false)                  
                         }}>
                             <Text style={styles.buttonText}>Yes</Text>
                         </TouchableOpacity>

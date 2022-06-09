@@ -1,10 +1,13 @@
 import {Slider} from "@miblanchard/react-native-slider"
-import { transform } from "lodash";
 import { View, Text, StyleSheet} from "react-native";
 import Colors from "../constants/Colors";
+import { useState } from "react";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
+import { updateVehicle } from "../graphql/mutations";
+import {API, graphqlOperation } from 'aws-amplify'
 
 const FillLevelSlider = props => {
+    
     
     const markPercentage = (index) => {
         if(index == 0) {
@@ -26,9 +29,22 @@ const FillLevelSlider = props => {
                 value={props.fillLevel}
                 minimumValue={0}
                 maximumValue={100}
-                step={1}
+                step={25}
                 minimumTrackTintColor={props.fillLevel < 90 ? Colors.summerYellow : "red"}
-                onValueChange={number => props.setFillLevel(number)}
+                onValueChange={async(number) =>{             
+                    props.setFillLevel(number[0])          
+                    try {
+                     const result = API.graphql(graphqlOperation(updateVehicle, {
+                            input: {
+                                userID: props.driverID, 
+                                fillLevel: number[0], 
+                            }
+                            }))
+                           
+                        } catch (error) {
+                            console.log("Location Update lykkes ikke ", error)
+                        }
+                }}
                 thumbTintColor={"yellow"}
                 renderTrackMarkComponent={index => {return(<View><Text style={styles.percentageText}>{markPercentage(index)}%</Text></View>)}}
                 renderAboveThumbComponent={index => {return(<View><Text style={styles.percentageText}>{props.fillLevel}%</Text></View>)}}

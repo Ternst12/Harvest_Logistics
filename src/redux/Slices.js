@@ -7,7 +7,10 @@ const initialState = {
     driverInformation: "",
     driverName: "",
     driverEmail: "",
+    driverID: ""
 }
+
+
 
 export const navSlice = createSlice({
     name: "nav",
@@ -31,12 +34,15 @@ export const navSlice = createSlice({
         setDriverEmail: (state, action) => {
             state.driverEmail = action.payload
         },
+        setDriverID: (state, action) => {
+            state.driverID = action.payload
+        }
       
     }
 })
 
 export const {
-    setOrgin, setDestination, setTravelTimeInformation, setDriverInformation, setDriverName, setDriverEmail
+    setOrgin, setDestination, setTravelTimeInformation, setDriverInformation, setDriverName, setDriverEmail, setDriverID
 } = navSlice.actions
 
 export const selectOrigin = (state) => state.nav.origin;
@@ -45,6 +51,7 @@ export const selectTravelTimeInformation = (state) => state.nav.travelTimeInform
 export const selectDriverInformation = (state) => state.nav.driverInformation;
 export const selectDriverName = (state) => state.nav.driverName;
 export const selectDriverEmail = (state) => state.nav.driverEmail;
+export const selectDriverID = (state) => state.nav.driverID;
 
 
 export default navSlice.reducer;

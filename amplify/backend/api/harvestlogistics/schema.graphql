@@ -2,8 +2,32 @@
 # all models in this schema. Learn more about authorization rules here: https://docs.amplify.aws/cli/graphql/authorization-rules
 input AMPLIFY { globalAuthRule: AuthRule = { allow: public } } # FOR TESTING ONLY!
 
-type Todo @model {
-  id: ID!
-  name: String!
-  description: String
+type User @model {
+    id: ID!
+    userName: String!
+    email: String!
+    phone: String!
+
+    vehicle: Vehicle @hasOne(fields: ["id"])
+}
+
+type Vehicle @model {
+        id: ID!
+        userID: ID! @primaryKey
+        userMail: String! 
+
+        type: String!
+        latitude: Float,
+        longitude: Float,
+        heading: Float,
+        fillLevel: Int
+}
+
+type Connection @model {
+    id: ID!
+    driverOne_UserID: ID!
+    driverTwo_UserID: ID!
+    driverOne_UserProfile: User @hasOne(fields: ["driverOne_UserID"])
+    driverTwo_UserProfile: User @hasOne(fields: ["driverTwo_UserID"])
+
 }

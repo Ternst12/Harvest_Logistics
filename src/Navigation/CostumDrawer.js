@@ -39,6 +39,7 @@ const CustomDrawer = (props) => {
           <View>
             <Text style={{color: 'white', fontSize: 24}}>{driverName}</Text>
             <Text style={{color: 'lightgrey'}}>Operating a {driverInformation}</Text>
+            <Text style={{color: 'lightgrey'}}>{driverEmail}</Text>
           </View>
         </View>
 

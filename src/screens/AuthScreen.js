@@ -3,10 +3,10 @@ import React, {useState, useEffect, useCallback} from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList} from "react-native";
 import Colors from "../constants/Colors";
 import { screenWidth } from "../constants/Dimensions";
-import { setDriverName } from "../redux/Slices";
-import { Amplify, Auth, API, graphqlOperation, input } from 'aws-amplify'
-// import {getUser, listUsers} from "../graphql/queries"
-// import {createUser} from "../graphql/mutations"
+import { setDriverName, setDriverID } from "../redux/Slices";
+import {Auth, API, graphqlOperation } from 'aws-amplify'
+import {getUser, listUsers} from "../graphql/queries"
+import {createUser, createVehicle} from "../graphql/mutations"
 import { setDriverEmail } from '../redux/Slices';
 
 const AuthScreen = props => {
@@ -14,55 +14,55 @@ const AuthScreen = props => {
     const dispatch = useDispatch()
 
     const [userName, setUserName] = useState("Testperson" + " nr. " + Math.floor(Math.random() * 101))
-    const [users, setUsers] = useState([])
 
 
     const auth = () => {
         dispatch(setDriverName(userName))
         props.navigation.navigate("Login")
     }
-    /*
+  
 
   const fetchUserInfo = async() => {
     const userInfo = await Auth.currentAuthenticatedUser()
     const userSub = userInfo.attributes.sub
+    dispatch(setDriverID(userSub))
     if(userInfo) {
       const userData = await API.graphql(
           graphqlOperation(getUser,  {id: userSub}
         ))
       if(userData.data.getUser) {
-        dispatch(setDriverEmail(userData.data.getUser.email))
+        const userEmail = userData.data.getUser.email
+        dispatch(setDriverEmail(userEmail))
+        console.log("Denne bruger eksisterer allerede i databasen")
         return;
       }
       const newUser = {
         id: userSub,
-        name: userInfo.username,
+        userName: userInfo.username,
         email: userInfo.attributes.email,
+        phone: userInfo.attributes.phone_number
       }
-      console.log(newUser)
-      const result = await API.graphql(graphqlOperation(createUser, {input: newUser}
-      ))
+      const newVehicle = {
+        userID: userSub,
+        type: "", 
+        latitude: 56.75217,
+        longitude: 10.327043,
+        userMail: userInfo.attributes.email
+      }
+
+      dispatch(setDriverEmail(newUser.email))
+      await API.graphql(graphqlOperation(createUser, {input: newUser}))
+      await API.graphql(graphqlOperation(createVehicle, {input: newVehicle}))
+      
     }
     
   }
-  const fetchUsers = async () => {
-      try {
-        const usersData = await API.graphql(
-            graphqlOperation(
-                 listUsers
-                ))
-        console.log("usersData = ", usersData)
-        setUsers(usersData.data.listUsers.items)
-      } catch (e) {
-        console.log("Problemer med at hente liste over brugere = ", e)
-      }
-  }
+
 
   useEffect(() => {
     fetchUserInfo()
-    fetchUsers()
   }, [])
-  */
+
     return (
         <View style={Styles.container}>
             <View style={Styles.inputBoxContainer}>
