@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { TextInput, View, StyleSheet, Text, TouchableOpacity, Keyboard, Image} from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, Keyboard, Image} from "react-native";
 import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 import { useSelector } from "react-redux";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,7 +16,6 @@ import { API, graphqlOperation} from "aws-amplify";
 import { listVehicles } from "../graphql/queries";
 import { createConnection } from "../graphql/mutations";
 import { onUpdateVehicle, onCreateConnection } from "../graphql/subscriptions";
-import { hide } from "../helperFunc/navigationbarFunctions";
 import InformationWhitebox from "../components/InformationWhiteBox";
 
 const MapScreen = (props) => {
@@ -26,8 +25,8 @@ const MapScreen = (props) => {
     const origin = useSelector(selectOrigin)
     const driverInformation = useSelector(selectDriverInformation)
 
-    const tractorIcon = require("../images/icons/logistics_tractor.png")
-    const combineIcon = require("../images/icons/logistics_combine.png")
+    const tractorIcon = require("../images/tractor.png")
+    const combineIcon = require("../images/harvester.png")
 
     const [markerCord, setMarkerCord] = useState(null)
     const [selectedVehicleID, setSelectedVehicleID] = useState(null)
@@ -45,13 +44,16 @@ const MapScreen = (props) => {
     const mapRef = useRef(null)
 
     useEffect(() => {
-        hide();
         const subscription = API.graphql(graphqlOperation(onCreateConnection, {driverTwo_UserID: driverID}))
             .subscribe({
                 next: ({ value }) => {
                     setConnectedToTractor(true)
                     console.log("There has been created a connection = ", value.data.onCreateConnection.driverTwo_UserID, " my userID is = ", driverID)
                     if(driverID == value.data.onCreateConnection.driverTwo_UserID) {
+                        setMarkerCord({
+                            lat: value.data.onCreateConnection.driverOne_UserProfile.vehicle.latitude,
+                            lng: value.data.onCreateConnection.driverOne_UserProfile.vehicle.longitude
+                        })
                         subscribeToVehicle(value.data.onCreateConnection.driverOne_UserID)
                         fetchVehicles()
                         setChoosenMarkerTitle(value.data.onCreateConnection.driverOne_UserProfile.email)
@@ -74,7 +76,7 @@ const MapScreen = (props) => {
                 )
             var allVehicles = response.data.listVehicles.items
             var filteredVehicles = allVehicles.filter((item) => item.userID != driverID)
-            console.log("filtered = ", filteredVehicles)
+            console.log("filter = ", filteredVehicles)
             setVehicle(filteredVehicles) //sortere brugeren fra listen, så det kun er en liste over andre brugere
         } catch(error) {
             console.log("problemer med at fetche = ", error)
@@ -87,10 +89,8 @@ const MapScreen = (props) => {
             graphqlOperation(onUpdateVehicle, {userID: userID})
           ).subscribe({
             next: ({ value }) => {
-              
                 if(userID == value.data.onUpdateVehicle.userID)
                 {
-                    
                     setMarkerCord({
                         lat: value.data.onUpdateVehicle.latitude,
                         lng: value.data.onUpdateVehicle.longitude
@@ -110,7 +110,7 @@ const MapScreen = (props) => {
             return;
         } else {
             mapRef.current.fitToSuppliedMarkers(["origin", choosenMarkerTitle], {
-                edgePadding: {top: screenWidth > 400 ? 200 : 400, right: 200, bottom: 200, left: 200}
+                edgePadding: {top: screenWidth > 400 ? 200 : 100, right: screenWidth > 400 ? 200 : 100, bottom: screenWidth > 400 ? 200 : 100, left: screenWidth > 400 ? 200 : 100}
             })
         }
     }, [origin, markerCord])
@@ -150,7 +150,7 @@ const MapScreen = (props) => {
         <Marker
         title="origin"
         identifier="origin"
-        coordinate={{latitude: origin.lat, longitude: origin.lng}}
+        coordinate={{latitude: origin ? origin.lat : 67.026427, longitude: origin ? origin.lng :  19.985735}}
         opacity={0}
         >
 

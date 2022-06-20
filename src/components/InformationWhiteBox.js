@@ -5,15 +5,14 @@ import { screenWidth, screenHeight } from "../constants/Dimensions";
 const InformationWhitebox = props => {
 
     const newDurationText = props.duration.split("\n")
-    const newDistanceText = props.distance.split("\n")
 
     return(
         <View style={styles.container}>
-            <View style={{width: "90%", height: "90%", alignItems: "center"}}>
+            <View style={{width: "90%", height: "95%", alignItems: "center"}}>
             {props.driverInformation != "combine" ?
                     <View style={styles.infoBox}>
                         <View style={styles.infoLeftAndMiddle}>
-                            <Text style={styles.text}>{props.duration}</Text>
+                            <Text style={styles.text}>{newDurationText}</Text>
                         </View>
                         <View style={styles.infoLeftAndMiddle}>
                             <Text style={styles.text}>{props.distance}</Text>
@@ -28,7 +27,7 @@ const InformationWhitebox = props => {
                             <Text style={styles.text}>{newDurationText}</Text>
                         </View>
                         <View style={[styles.infoRight, {width: "50%"}]}>
-                            <Text style={styles.text}>{newDistanceText}</Text>
+                            <Text style={styles.text}>{props.distance}</Text>
                         </View>
                     </View>
             }
@@ -43,7 +42,7 @@ const styles = StyleSheet.create ({
         position: "absolute", 
         bottom: 0, 
         width: "100%", 
-        height: screenHeight * 0.10, 
+        height: screenWidth > 400 ? screenHeight * 0.12 : screenHeight * 0.10, 
         backgroundColor: "white", 
         borderTopLeftRadius: 15, 
         borderTopRightRadius: 15, 

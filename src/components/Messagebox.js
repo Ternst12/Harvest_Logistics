@@ -8,7 +8,6 @@ import { screenWidth, screenHeight } from "../constants/Dimensions";
 const Messagebox = props => {
 
     const newDurationText = props.duration.split("\n")
-    const newDistanceText = props.distance.split("\n")
 
     return(
         <View style={styles.boxContainer}>
@@ -16,7 +15,7 @@ const Messagebox = props => {
             <View style={{position: "absolute", top: "25%", width: "80%", alignItems: "center"}}>
                 <View style={{width: "70%", justifyContent: "space-around", marginBottom: 10, marginTop: screenWidth > 400 ?  "-10%" : "-15%"}}>
                     <Text>Duration: {newDurationText}</Text>
-                    <Text>Distance: {newDistanceText}</Text>
+                    <Text>Distance: {props.distance}</Text>
                 </View>
                 <Text style={{textAlign: "center", fontSize: 16, fontWeight: "500"}}>Do you want to share your location with the combine and start the operation?</Text>
                 <View style={{flexDirection: "row", width: "80%", marginBottom: 10, height: "100%", justifyContent: "space-between", marginTop: "10%"}}>

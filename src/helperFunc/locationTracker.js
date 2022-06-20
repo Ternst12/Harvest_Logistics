@@ -5,7 +5,7 @@ import * as Location from "expo-location"
 
 import { useDispatch, useSelector } from "react-redux"
 import { selectDriverID, setOrgin } from "../redux/Slices"
-
+import * as Device from 'expo-device';
 import { updateVehicle } from "../graphql/mutations";
 import {API, graphqlOperation } from 'aws-amplify'
 

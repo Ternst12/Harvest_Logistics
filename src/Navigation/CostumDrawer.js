@@ -65,8 +65,8 @@ const CustomDrawer = (props) => {
         </Pressable>
 
         {/* Make money */}
-        <Pressable onPress={() => {console.warn('Make Money Driving')}}>
-          <Text style={{color: 'white', paddingVertical: 5}}>{driverEmail}</Text>
+        <Pressable onPress={() => {props.navigation.navigate("Login")}}>
+          <Text style={{color: 'white', paddingVertical: 5}}>Switch vehicle</Text>
         </Pressable>
 
 

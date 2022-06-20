@@ -1,18 +1,15 @@
 import React, {useState} from "react";
 import { useDispatch, useSelector} from "react-redux";
-import {View, StyleSheet, TouchableOpacity, Image, Text} from "react-native"
+import {View, StyleSheet, TouchableOpacity, Image, Text, Platform} from "react-native"
 import { selectDriverID, setDriverInformation} from "../redux/Slices";
 import LocationTracker from "../helperFunc/locationTracker";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
-import { io } from "socket.io-client";
-import { socketAdress } from "../constants/SocketAdress";
 import { updateVehicle } from "../graphql/mutations";
 import {API, graphqlOperation } from 'aws-amplify'
 
 const LoginScreen = props => {
 
     const dispatch = useDispatch();
-    const [socket, setSocket] = useState(io(socketAdress))
     const driverID = useSelector(selectDriverID)
 
     const updateVehicleType = async(typeName) => {
@@ -31,15 +28,15 @@ const LoginScreen = props => {
     return (
         <View style={styles.container}>
             <View style={{position: "absolute", top: 20, right: 20}}>
-                <LocationTracker socket={socket} />
+                <LocationTracker/>
             </View>
             <TouchableOpacity style={{borderColor:"grey", borderBottomWidth: 1, width: "90%", justifyContent: "center", alignItems: "center", paddingBottom: screenHeight * 0.05 }} onPress={() => {props.navigation.navigate("Home");
-                                              dispatch(setDriverInformation("tractor")); updateVehicleType("tractor");  }}>
-                <Image resizeMode="stretch" source={require("../images/icons/tractor.png")} style={styles.icon}/> 
+                                              dispatch(setDriverInformation("tractor")); updateVehicleType("tractor"); console.log(Platform.OS + " " + screenWidth) }}>
+                <Image resizeMode="stretch" source={require("../images/tractor.png")} style={styles.icon}/> 
             </TouchableOpacity>
             <TouchableOpacity style={{paddingTop: screenHeight * 0.05}} onPress={() => {props.navigation.navigate("Home");
-                                              dispatch(setDriverInformation("combine")); updateVehicleType("combine");  }}>
-                <Image source={require("../images/icons/harvester.png")} style={styles.icon}/> 
+                                              dispatch(setDriverInformation("combine")); updateVehicleType("combine"); console.log(Platform.OS + " " + screenWidth) }}>
+                <Image source={require("../images/harvester.png")} style={styles.icon}/> 
             </TouchableOpacity>
         </View>
     )

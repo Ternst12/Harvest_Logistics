@@ -6,16 +6,25 @@ const convertMinuts = (minuts) => {
   var MINUTES = parseInt(minuts); //some integer
   var m = MINUTES % 60;
   var h = (MINUTES-m)/60;
-  var HHMM = h.toString() + " h: " + "\n" + (m<10?"0":"") + m.toString() + " m";
+  var HHMM = h.toString() + " h " + "\n" + m.toString() + " m";
   return HHMM;
 }
 
 const convertMeters = (meter) => {
-  var METER = parseInt(meter * 1000); //some integer
-  var m = METER % 1000;
-  var km = (METER-m)/1000;
-  var KmM = km.toString() + " km: " + "\n" + m.toString() + " m";
+  var METER = parseInt(meter * 1000)
+  var KmM = "";
+  if(METER > 10000)
+  {
+  var km = METER / 1000
+  KmM = km.toString() + " km";
   return KmM;
+  } else {
+    km = parseFloat(METER / 1000).toFixed(1)
+    KmM = km + " km"
+    return KmM;
+  }
+
+
 }
 
 export const Directions = props => {

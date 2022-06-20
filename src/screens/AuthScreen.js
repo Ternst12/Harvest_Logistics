@@ -20,46 +20,46 @@ const AuthScreen = props => {
         dispatch(setDriverName(userName))
         props.navigation.navigate("Login")
     }
-  
 
-  const fetchUserInfo = async() => {
-    const userInfo = await Auth.currentAuthenticatedUser()
-    const userSub = userInfo.attributes.sub
-    dispatch(setDriverID(userSub))
-    if(userInfo) {
-      const userData = await API.graphql(
-          graphqlOperation(getUser,  {id: userSub}
-        ))
-      if(userData.data.getUser) {
-        const userEmail = userData.data.getUser.email
-        dispatch(setDriverEmail(userEmail))
-        console.log("Denne bruger eksisterer allerede i databasen")
-        return;
-      }
-      const newUser = {
-        id: userSub,
-        userName: userInfo.username,
-        email: userInfo.attributes.email,
-        phone: userInfo.attributes.phone_number
-      }
-      const newVehicle = {
-        userID: userSub,
-        type: "", 
-        latitude: 56.75217,
-        longitude: 10.327043,
-        userMail: userInfo.attributes.email
-      }
-
-      dispatch(setDriverEmail(newUser.email))
-      await API.graphql(graphqlOperation(createUser, {input: newUser}))
-      await API.graphql(graphqlOperation(createVehicle, {input: newVehicle}))
-      
-    }
-    
-  }
 
 
   useEffect(() => {
+    const fetchUserInfo = async() => {
+      const userInfo = await Auth.currentAuthenticatedUser()
+      const userSub = userInfo.attributes.sub
+      dispatch(setDriverID(userSub))
+      if(userInfo) {
+        const userData = await API.graphql(
+            graphqlOperation(getUser,  {id: userSub}
+          ))
+        if(userData.data.getUser) {
+          const userEmail = userData.data.getUser.email
+          dispatch(setDriverEmail(userEmail))
+          console.log("Denne bruger eksisterer allerede i databasen")
+          return;
+        }
+        const newUser = {
+          id: userSub,
+          userName: userInfo.username,
+          email: userInfo.attributes.email,
+          phone: userInfo.attributes.phone_number
+        }
+        const newVehicle = {
+          userID: userSub,
+          type: "", 
+          latitude: 56.75217,
+          longitude: 10.327043,
+          userMail: userInfo.attributes.email
+        }
+  
+        dispatch(setDriverEmail(newUser.email))
+        await API.graphql(graphqlOperation(createUser, {input: newUser}))
+        await API.graphql(graphqlOperation(createVehicle, {input: newVehicle}))
+        
+      }
+      
+    }
+  
     fetchUserInfo()
   }, [])
 

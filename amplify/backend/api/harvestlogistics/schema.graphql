@@ -29,5 +29,7 @@ type Connection @model {
     driverTwo_UserID: ID!
     driverOne_UserProfile: User @hasOne(fields: ["driverOne_UserID"])
     driverTwo_UserProfile: User @hasOne(fields: ["driverTwo_UserID"])
+    driverOne_Message: String
+    driverTwo_Message: String
 
 }
