@@ -5,7 +5,7 @@ import Colors from "../constants/Colors";
 import { screenWidth } from "../constants/Dimensions";
 import { setDriverName, setDriverID } from "../redux/Slices";
 import {Auth, API, graphqlOperation } from 'aws-amplify'
-import {getUser, listUsers} from "../graphql/queries"
+import {getUser, listConnections} from "../graphql/queries"
 import {createUser, createVehicle} from "../graphql/mutations"
 import { setDriverEmail } from '../redux/Slices';
 

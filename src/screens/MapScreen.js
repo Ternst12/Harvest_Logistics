@@ -5,10 +5,8 @@ import { useSelector } from "react-redux";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Directions } from "../components/Directions";
 import { selectOrigin, selectDriverInformation, selectDriverName, selectDriverID} from "../redux/Slices";
-import { io } from "socket.io-client"
 import Messagebox from "../components/Messagebox";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
-import { socketAdress } from "../constants/SocketAdress";
 import { openMaps } from "../helperFunc/openMaps";
 import Colors from "../constants/Colors";
 import FillLevelSlider from "../components/FillLevelSlider";
@@ -17,6 +15,7 @@ import { listVehicles } from "../graphql/queries";
 import { createConnection } from "../graphql/mutations";
 import { onUpdateVehicle, onCreateConnection } from "../graphql/subscriptions";
 import InformationWhitebox from "../components/InformationWhiteBox";
+import StopButton from "../components/StopButton";
 
 const MapScreen = (props) => {
 
@@ -38,12 +37,14 @@ const MapScreen = (props) => {
     const [shownFillLevel, setShownFillLevel] = useState(0)
     const [choosenMarkerTitle, setChoosenMarkerTitle] = useState("")
     const [operationStarted, setOperationStarted] = useState(false)
+    const [subscription, setSubscription] = useState(null)
 
     const [vehicle, setVehicle] = useState([])
 
     const mapRef = useRef(null)
 
     useEffect(() => {
+        if(driverInformation == "combine") {
         const subscription = API.graphql(graphqlOperation(onCreateConnection, {driverTwo_UserID: driverID}))
             .subscribe({
                 next: ({ value }) => {
@@ -59,8 +60,12 @@ const MapScreen = (props) => {
                         setChoosenMarkerTitle(value.data.onCreateConnection.driverOne_UserProfile.email)
                     }
                 },
-                error: error => console.warn(error)
+                error: error => console.warn("There has been an subscription error regarding connections with user = ", driverID, " the error = ", error),
+                complete: () => {console.log("Subscription has been cancelled"); setMarkerCord(null); setSubscription(null) }
             })
+        }
+        console.log("subsciption = ", subscription)
+        setSubscription(subscription)
     }, [])
 
     const createConnectionToVehicle = async(driverID, selectedVehicleID) => {
@@ -84,6 +89,7 @@ const MapScreen = (props) => {
     }
 
     const subscribeToVehicle = (userID) => {
+        console.log("My own userId = ", driverID,  " the others userID = ", userID)
         setOperationStarted(true)
         const subscription = API.graphql(
             graphqlOperation(onUpdateVehicle, {userID: userID})
@@ -100,8 +106,11 @@ const MapScreen = (props) => {
                     }
                 }
             },
-            error: error => console.warn(error)
+            error: error => console.warn("There has been an subscription error with user = ", driverID, " userId = ", userID, " the error = ", error),
+            complete: () => {console.log("Subscription has been cancelled"); setMarkerCord(null); setSubscription(null) }
           })    
+          console.log("subscription = ", subscription)
+          setSubscription(subscription)
     }
 
 
@@ -110,7 +119,7 @@ const MapScreen = (props) => {
             return;
         } else {
             mapRef.current.fitToSuppliedMarkers(["origin", choosenMarkerTitle], {
-                edgePadding: {top: screenWidth > 400 ? 200 : 100, right: screenWidth > 400 ? 200 : 100, bottom: screenWidth > 400 ? 200 : 100, left: screenWidth > 400 ? 200 : 100}
+                edgePadding: {top: screenWidth > 400 ? 300 : 100, right: screenWidth > 400 ? 300 : 100, bottom: screenWidth > 400 ? 300 : 100, left: screenWidth > 400 ? 300 : 100}
             })
         }
     }, [origin, markerCord])
@@ -227,6 +236,7 @@ const MapScreen = (props) => {
         :
         null
         }
+        <StopButton driverID={driverID} subscription={subscription}/>
     </View>
   );
 };

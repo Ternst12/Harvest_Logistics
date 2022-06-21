@@ -149,6 +149,8 @@ export const getConnection = /* GraphQL */ `
         createdAt
         updatedAt
       }
+      driverOne_Message
+      driverTwo_Message
       createdAt
       updatedAt
     }
@@ -181,6 +183,8 @@ export const listConnections = /* GraphQL */ `
           createdAt
           updatedAt
         }
+        driverOne_Message
+        driverTwo_Message
         createdAt
         updatedAt
       }

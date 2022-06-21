@@ -167,6 +167,8 @@ export const onCreateConnection = /* GraphQL */ `
         createdAt
         updatedAt
       }
+      driverOne_Message
+      driverTwo_Message
       createdAt
       updatedAt
     }
@@ -218,6 +220,8 @@ export const onUpdateConnection = /* GraphQL */ `
         createdAt
         updatedAt
       }
+      driverOne_Message
+      driverTwo_Message
       createdAt
       updatedAt
     }
@@ -269,6 +273,8 @@ export const onDeleteConnection = /* GraphQL */ `
         createdAt
         updatedAt
       }
+      driverOne_Message
+      driverTwo_Message
       createdAt
       updatedAt
     }
