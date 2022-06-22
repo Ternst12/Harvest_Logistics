@@ -16,6 +16,7 @@ import { createConnection } from "../graphql/mutations";
 import { onUpdateVehicle, onCreateConnection } from "../graphql/subscriptions";
 import InformationWhitebox from "../components/InformationWhiteBox";
 import StopButton from "../components/StopButton";
+import { SettingOpenToConnection } from "../helperFunc/SettingOpenToConnections";
 
 const MapScreen = (props) => {
 
@@ -50,7 +51,10 @@ const MapScreen = (props) => {
                 next: ({ value }) => {
                     setConnectedToTractor(true)
                     console.log("There has been created a connection = ", value.data.onCreateConnection.driverTwo_UserID, " my userID is = ", driverID)
+                    SettingOpenToConnection(driverID, true)
                     if(driverID == value.data.onCreateConnection.driverTwo_UserID) {
+                        console.log("The other drivers lat and lng = " + value.data.onCreateConnection.driverOne_UserProfile.vehicle.latitude + " : " + value.data.onCreateConnection.driverOne_UserProfile.vehicle.longitude + " /n "
+                        + "My own lat and lng = " + value.data.onCreateConnection.driverTwo_UserProfile.vehicle.latitude + " : " + value.data.onCreateConnection.driverTwo_UserProfile.vehicle.longitude)
                         setMarkerCord({
                             lat: value.data.onCreateConnection.driverOne_UserProfile.vehicle.latitude,
                             lng: value.data.onCreateConnection.driverOne_UserProfile.vehicle.longitude
@@ -64,7 +68,7 @@ const MapScreen = (props) => {
                 complete: () => {console.log("Subscription has been cancelled"); setMarkerCord(null); setSubscription(null) }
             })
         }
-        console.log("subsciption = ", subscription)
+        
         setSubscription(subscription)
     }, [])
 
@@ -95,7 +99,7 @@ const MapScreen = (props) => {
             graphqlOperation(onUpdateVehicle, {userID: userID})
           ).subscribe({
             next: ({ value }) => {
-                if(userID == value.data.onUpdateVehicle.userID)
+                if(userID == value.data.onUpdateVehicle.userID)            
                 {
                     setMarkerCord({
                         lat: value.data.onUpdateVehicle.latitude,
@@ -104,12 +108,18 @@ const MapScreen = (props) => {
                     if(value.data.onUpdateVehicle.type != "tractor"){
                     setFillLevel(value.data.onUpdateVehicle.fillLevel)
                     }
+                    if(value.data.onUpdateVehicle.openToConnection == false){
+                        console.log("cancel sub")
+                        SettingOpenToConnection(driverID, false)
+                        subscription.unsubscribe()
+                        setMarkerCord(null)
+                        setOperationStarted(false)
+                    }
                 }
             },
             error: error => console.warn("There has been an subscription error with user = ", driverID, " userId = ", userID, " the error = ", error),
             complete: () => {console.log("Subscription has been cancelled"); setMarkerCord(null); setSubscription(null) }
           })    
-          console.log("subscription = ", subscription)
           setSubscription(subscription)
     }
 
@@ -118,9 +128,12 @@ const MapScreen = (props) => {
         if(!origin || !markerCord){
             return;
         } else {
-            mapRef.current.fitToSuppliedMarkers(["origin", choosenMarkerTitle], {
-                edgePadding: {top: screenWidth > 400 ? 300 : 100, right: screenWidth > 400 ? 300 : 100, bottom: screenWidth > 400 ? 300 : 100, left: screenWidth > 400 ? 300 : 100}
-            })
+
+            setTimeout(() => {
+                mapRef.current.fitToSuppliedMarkers(["origin", choosenMarkerTitle], {
+                    edgePadding: {top: screenWidth > 400 ? 300 : 100, right: screenWidth > 400 ? 300 : 100, bottom: screenWidth > 400 ? 300 : 100, left: screenWidth > 400 ? 300 : 100}
+                })
+            }, 6000)
         }
     }, [origin, markerCord])
 
@@ -154,7 +167,9 @@ const MapScreen = (props) => {
           longitude: origin ? origin.lng :  19.985735,
           latitudeDelta: 0.0222,
           longitudeDelta: 0.0121,
-        }}>
+        }}
+
+        >
 
         <Marker
         title="origin"
@@ -236,7 +251,7 @@ const MapScreen = (props) => {
         :
         null
         }
-        <StopButton driverID={driverID} subscription={subscription}/>
+        <StopButton setOperationStarted={setOperationStarted} driverID={driverID} subscription={subscription} setMarkerCord={setMarkerCord} setConnectedToTractor={setConnectedToTractor}/>
     </View>
   );
 };

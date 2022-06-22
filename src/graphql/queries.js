@@ -17,9 +17,11 @@ export const getUser = /* GraphQL */ `
         longitude
         heading
         fillLevel
+        openToConnection
         createdAt
         updatedAt
       }
+      isActive
       createdAt
       updatedAt
     }
@@ -46,9 +48,11 @@ export const listUsers = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -67,6 +71,7 @@ export const getVehicle = /* GraphQL */ `
       longitude
       heading
       fillLevel
+      openToConnection
       createdAt
       updatedAt
     }
@@ -96,6 +101,7 @@ export const listVehicles = /* GraphQL */ `
         longitude
         heading
         fillLevel
+        openToConnection
         createdAt
         updatedAt
       }
@@ -123,9 +129,11 @@ export const getConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -143,9 +151,11 @@ export const getConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -172,6 +182,7 @@ export const listConnections = /* GraphQL */ `
           userName
           email
           phone
+          isActive
           createdAt
           updatedAt
         }
@@ -180,11 +191,103 @@ export const listConnections = /* GraphQL */ `
           userName
           email
           phone
+          isActive
           createdAt
           updatedAt
         }
         driverOne_Message
         driverTwo_Message
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getActivityOverview = /* GraphQL */ `
+  query GetActivityOverview($id: ID!) {
+    getActivityOverview(id: $id) {
+      id
+      activeUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      inActiveUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listActivityOverviews = /* GraphQL */ `
+  query ListActivityOverviews(
+    $filter: ModelActivityOverviewFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listActivityOverviews(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        activeUsers {
+          id
+          userName
+          email
+          phone
+          isActive
+          createdAt
+          updatedAt
+        }
+        inActiveUsers {
+          id
+          userName
+          email
+          phone
+          isActive
+          createdAt
+          updatedAt
+        }
         createdAt
         updatedAt
       }

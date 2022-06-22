@@ -4,6 +4,7 @@ import { screenWidth } from "../constants/Dimensions";
 import { deleteConnection } from "../graphql/mutations";
 import { getConnection, listConnections } from "../graphql/queries";
 import {API, graphqlOperation } from 'aws-amplify'
+import { SettingOpenToConnection } from "../helperFunc/SettingOpenToConnections";
 
 
 const StopButton = props => {
@@ -46,7 +47,6 @@ const StopButton = props => {
                     
         try {
             const myConnection = await API.graphql(graphqlOperation(listConnections, {filter: filter}));
-            console.log("My Connections = ", myConnection)
                 if(myConnection) {
                     deleteCon(myConnection)
                 } else {
@@ -69,6 +69,11 @@ const StopButton = props => {
                 }}
                 onLongPress={() => {
                     deleteConnectionWithOtherUser(props.driverID);
+                    props.subscription.unsubscribe()
+                    props.setMarkerCord(null)
+                    props.setConnectedToTractor(false)
+                    props.setOperationStarted(false)
+                    SettingOpenToConnection(props.driverID, false)
                 }}
                 >
                 <Image source   ={require("../images/forbidden-2.png")} style={{width: "100%", height: "100%"}} />

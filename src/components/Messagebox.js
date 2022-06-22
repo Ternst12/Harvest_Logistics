@@ -2,12 +2,12 @@ import React from "react";
 import { View, Text, StyleSheet, Linking, Platform } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { screenWidth, screenHeight } from "../constants/Dimensions";
-
-
+import { SettingOpenToConnection } from "../helperFunc/SettingOpenToConnections";
 
 const Messagebox = props => {
 
     const newDurationText = props.duration.split("\n")
+
 
     return(
         <View style={styles.boxContainer}>
@@ -31,7 +31,9 @@ const Messagebox = props => {
                         <TouchableOpacity onPress={() => {
                             props.subscribeToVehicle(props.selectedVehicleID)
                             props.createConnectionToVehicle(props.driverID, props.selectedVehicleID) 
-                            props.setShowMessagebox(false)                  
+                            props.setShowMessagebox(false)   
+                            SettingOpenToConnection(props.driverID, true)   
+                             
                         }}>
                             <Text style={styles.buttonText}>Yes</Text>
                         </TouchableOpacity>

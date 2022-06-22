@@ -20,9 +20,11 @@ export const createUser = /* GraphQL */ `
         longitude
         heading
         fillLevel
+        openToConnection
         createdAt
         updatedAt
       }
+      isActive
       createdAt
       updatedAt
     }
@@ -47,9 +49,11 @@ export const updateUser = /* GraphQL */ `
         longitude
         heading
         fillLevel
+        openToConnection
         createdAt
         updatedAt
       }
+      isActive
       createdAt
       updatedAt
     }
@@ -74,9 +78,11 @@ export const deleteUser = /* GraphQL */ `
         longitude
         heading
         fillLevel
+        openToConnection
         createdAt
         updatedAt
       }
+      isActive
       createdAt
       updatedAt
     }
@@ -96,6 +102,7 @@ export const createVehicle = /* GraphQL */ `
       longitude
       heading
       fillLevel
+      openToConnection
       createdAt
       updatedAt
     }
@@ -115,6 +122,7 @@ export const updateVehicle = /* GraphQL */ `
       longitude
       heading
       fillLevel
+      openToConnection
       createdAt
       updatedAt
     }
@@ -134,6 +142,7 @@ export const deleteVehicle = /* GraphQL */ `
       longitude
       heading
       fillLevel
+      openToConnection
       createdAt
       updatedAt
     }
@@ -162,9 +171,11 @@ export const createConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -182,9 +193,11 @@ export const createConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -218,9 +231,11 @@ export const updateConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -238,9 +253,11 @@ export const updateConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -274,9 +291,11 @@ export const deleteConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -294,14 +313,184 @@ export const deleteConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
       driverOne_Message
       driverTwo_Message
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const createActivityOverview = /* GraphQL */ `
+  mutation CreateActivityOverview(
+    $input: CreateActivityOverviewInput!
+    $condition: ModelActivityOverviewConditionInput
+  ) {
+    createActivityOverview(input: $input, condition: $condition) {
+      id
+      activeUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      inActiveUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const updateActivityOverview = /* GraphQL */ `
+  mutation UpdateActivityOverview(
+    $input: UpdateActivityOverviewInput!
+    $condition: ModelActivityOverviewConditionInput
+  ) {
+    updateActivityOverview(input: $input, condition: $condition) {
+      id
+      activeUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      inActiveUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const deleteActivityOverview = /* GraphQL */ `
+  mutation DeleteActivityOverview(
+    $input: DeleteActivityOverviewInput!
+    $condition: ModelActivityOverviewConditionInput
+  ) {
+    deleteActivityOverview(input: $input, condition: $condition) {
+      id
+      activeUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      inActiveUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
       createdAt
       updatedAt
     }

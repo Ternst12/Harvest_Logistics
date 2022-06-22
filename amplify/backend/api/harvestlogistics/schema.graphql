@@ -9,6 +9,7 @@ type User @model {
     phone: String!
 
     vehicle: Vehicle @hasOne(fields: ["id"])
+    isActive: Boolean
 }
 
 type Vehicle @model {
@@ -21,6 +22,7 @@ type Vehicle @model {
         longitude: Float,
         heading: Float,
         fillLevel: Int
+        openToConnection: Boolean
 }
 
 type Connection @model {
@@ -31,5 +33,10 @@ type Connection @model {
     driverTwo_UserProfile: User @hasOne(fields: ["driverTwo_UserID"])
     driverOne_Message: String
     driverTwo_Message: String
+}
 
+type ActivityOverview @model {
+    id: ID!
+    activeUsers: [User] 
+    inActiveUsers: [User]
 }

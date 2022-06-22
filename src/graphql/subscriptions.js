@@ -17,9 +17,11 @@ export const onCreateUser = /* GraphQL */ `
         longitude
         heading
         fillLevel
+        openToConnection
         createdAt
         updatedAt
       }
+      isActive
       createdAt
       updatedAt
     }
@@ -41,9 +43,11 @@ export const onUpdateUser = /* GraphQL */ `
         longitude
         heading
         fillLevel
+        openToConnection
         createdAt
         updatedAt
       }
+      isActive
       createdAt
       updatedAt
     }
@@ -65,9 +69,11 @@ export const onDeleteUser = /* GraphQL */ `
         longitude
         heading
         fillLevel
+        openToConnection
         createdAt
         updatedAt
       }
+      isActive
       createdAt
       updatedAt
     }
@@ -84,6 +90,7 @@ export const onCreateVehicle = /* GraphQL */ `
       longitude
       heading
       fillLevel
+      openToConnection
       createdAt
       updatedAt
     }
@@ -100,6 +107,7 @@ export const onUpdateVehicle = /* GraphQL */ `
       longitude
       heading
       fillLevel
+      openToConnection
       createdAt
       updatedAt
     }
@@ -116,6 +124,7 @@ export const onDeleteVehicle = /* GraphQL */ `
       longitude
       heading
       fillLevel
+      openToConnection
       createdAt
       updatedAt
     }
@@ -141,9 +150,11 @@ export const onCreateConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -161,9 +172,11 @@ export const onCreateConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -194,9 +207,11 @@ export const onUpdateConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -214,9 +229,11 @@ export const onUpdateConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -247,9 +264,11 @@ export const onDeleteConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
@@ -267,14 +286,175 @@ export const onDeleteConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
+          openToConnection
           createdAt
           updatedAt
         }
+        isActive
         createdAt
         updatedAt
       }
       driverOne_Message
       driverTwo_Message
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onCreateActivityOverview = /* GraphQL */ `
+  subscription OnCreateActivityOverview {
+    onCreateActivityOverview {
+      id
+      activeUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      inActiveUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onUpdateActivityOverview = /* GraphQL */ `
+  subscription OnUpdateActivityOverview {
+    onUpdateActivityOverview {
+      id
+      activeUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      inActiveUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onDeleteActivityOverview = /* GraphQL */ `
+  subscription OnDeleteActivityOverview {
+    onDeleteActivityOverview {
+      id
+      activeUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
+      inActiveUsers {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          openToConnection
+          createdAt
+          updatedAt
+        }
+        isActive
+        createdAt
+        updatedAt
+      }
       createdAt
       updatedAt
     }
