@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
-import React, {useState, useEffect, useCallback} from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList} from "react-native";
+import React, {useState, useEffect, useCallback, useRef} from "react";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, AppState} from "react-native";
 import Colors from "../constants/Colors";
 import { screenWidth } from "../constants/Dimensions";
 import { setDriverName, setDriverID } from "../redux/Slices";
@@ -9,11 +9,42 @@ import {getUser, listConnections} from "../graphql/queries"
 import {createUser, createVehicle} from "../graphql/mutations"
 import { setDriverEmail } from '../redux/Slices';
 
+
+
 const AuthScreen = props => {
 
     const dispatch = useDispatch()
 
     const [userName, setUserName] = useState("Testperson" + " nr. " + Math.floor(Math.random() * 101))
+
+    const appState = useRef(AppState.currentState);
+    const [appStateVisible, setAppStateVisible] = useState(appState.current);
+
+    useEffect(() => {
+      const subscription = AppState.addEventListener("change", nextAppState => {
+        if (
+          appState.current.match(/inactive|background/) &&
+          nextAppState === "active"
+        ) {
+          console.log("App has come to the foreground!");
+        }
+
+        if (
+          nextAppState == "background"
+        ) {
+          console.log("Appen er muligvis lukket");
+        }
+
+        appState.current = nextAppState;
+        setAppStateVisible(appState.current);
+        console.log("AppState", appState.current);
+      });
+
+      return () => {
+        console.log("sub remove")
+        subscription.remove();
+      };
+    }, []);
 
 
     const auth = () => {
@@ -78,6 +109,9 @@ const AuthScreen = props => {
                     </TouchableOpacity>
                 </View>
             </View>
+            <Text style={{fontSize: 25}}>
+              {appStateVisible}
+            </Text>
         </View>
     )
 }

@@ -5,11 +5,10 @@ import { Provider } from 'react-redux';
 import { Amplify} from 'aws-amplify'
 import awsconfig from "./src/aws-exports"
 import { withAuthenticator } from 'aws-amplify-react-native'
-import {useEffect} from "react"
-import {Platform} from "react-native"
+import {useEffect, useRef} from "react"
+import {Platform, AppState} from "react-native"
 import * as NavigationBar from 'expo-navigation-bar';
 import {hide} from "./src/helperFunc/navigationbarFunctions"
-import * as Sentry from 'sentry-expo';
 
 
 

@@ -12,7 +12,6 @@ const StopButton = props => {
     const [signOpacity, setSignOpacity] = useState(0.4)
 
     const deleteCon = async(myConnection) => {
-        console.log("part 2 = ", myConnection.data.listConnections.items.length)
         const conArray = myConnection.data.listConnections.items
         const result = await conArray.map(async(con) => {
             try{
