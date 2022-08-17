@@ -11,52 +11,6 @@ const StopButton = props => {
 
     const [signOpacity, setSignOpacity] = useState(0.4)
 
-    const deleteCon = async(myConnection) => {
-        const conArray = myConnection.data.listConnections.items
-        const result = await conArray.map(async(con) => {
-            try{
-               const response = await  API.graphql(graphqlOperation(deleteConnection, 
-                        {input: 
-                            {
-                                id: con.id
-                            }
-                        }
-                    ))
-                console.log("Respons from deleting a con = ", response)    
-            } catch (error) {
-                console.warn("problem with deleting connection = ", error)
-            } 
-        })
-    
-        console.log("result = ", result)
-    }
-
-    const deleteConnectionWithOtherUser = async(userID) =>{
-
-        let filter = {
-            or: [
-            {    
-                driverOne_UserID: {eq: userID}
-            },
-            {
-                driverTwo_UserID: {eq: userID}
-            }
-            ]
-        }
-                    
-        try {
-            const myConnection = await API.graphql(graphqlOperation(listConnections, {filter: filter}));
-                if(myConnection) {
-                    deleteCon(myConnection)
-                } else {
-                    console.log("No connections")
-                }
-        } 
-        catch (error) {
-            console.warn("Something went wrong when fetching connections = ", error)
-        }
-    }
-
     return (
         <View style={[styles.container,{opacity: signOpacity}]}>
             <TouchableWithoutFeedback
@@ -67,12 +21,9 @@ const StopButton = props => {
                     setSignOpacity(0.4)
                 }}
                 onLongPress={() => {
-                    deleteConnectionWithOtherUser(props.driverID);
-                    props.subscription.unsubscribe()
-                    props.setMarkerCord(null)
-                    props.setConnectedToTractor(false)
+                    clearInterval(props.interval)
                     props.setOperationStarted(false)
-                    SettingOpenToConnection(props.driverID, false)
+                    props.navigation.navigate("Auth")
                 }}
                 >
                 <Image source   ={require("../images/forbidden-2.png")} style={{width: "100%", height: "100%"}} />

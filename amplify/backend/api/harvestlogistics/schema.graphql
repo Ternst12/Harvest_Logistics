@@ -9,7 +9,11 @@ type User @model {
     phone: String!
 
     vehicle: Vehicle @hasOne(fields: ["id"])
+    geofenceSettings: GeofenceSetting @hasOne(fields: ["id"])
     isActive: Boolean
+    
+    operation_created: AWSJSON
+    operation_invited: AWSJSON
 }
 
 type Vehicle @model {
@@ -22,7 +26,7 @@ type Vehicle @model {
         longitude: Float,
         heading: Float,
         fillLevel: Int
-        openToConnection: Boolean
+        HeadingToCombine: Boolean
 }
 
 type Connection @model {
@@ -39,4 +43,41 @@ type ActivityOverview @model {
     id: ID!
     activeUsers: [User] 
     inActiveUsers: [User]
+}
+
+type cords @model {
+    latitude: String!
+    longitude: String!
+}
+
+type Place @model {
+    id: ID!
+    name: String!
+    created_By_User_With_ID: ID! 
+    created_By_User: User @hasOne(fields: ["created_By_User_With_ID"])
+    placeCords: AWSJSON
+}
+
+type GeofenceSetting @model {
+        id: ID!
+        userID: ID! @primaryKey
+        
+
+        geofenceName: String,
+        geofenceRadius: Int, 
+        geofence_latitude: Float,
+        geofence_longitude: Float,
+}
+
+type Participant @model {
+    OperationId: ID! @primaryKey
+    UserId: ID!
+    VehicleType: String!
+}
+
+type Operation @model {
+        id: ID!
+        CreatorId: ID!
+        OperationName: String!,
+        Participants: AWSJSON
 }

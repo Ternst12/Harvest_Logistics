@@ -17,11 +17,23 @@ export const getUser = /* GraphQL */ `
         longitude
         heading
         fillLevel
-        openToConnection
+        HeadingToCombine
+        createdAt
+        updatedAt
+      }
+      geofenceSettings {
+        id
+        userID
+        geofenceName
+        geofenceRadius
+        geofence_latitude
+        geofence_longitude
         createdAt
         updatedAt
       }
       isActive
+      operation_created
+      operation_invited
       createdAt
       updatedAt
     }
@@ -48,11 +60,23 @@ export const listUsers = /* GraphQL */ `
           longitude
           heading
           fillLevel
-          openToConnection
+          HeadingToCombine
+          createdAt
+          updatedAt
+        }
+        geofenceSettings {
+          id
+          userID
+          geofenceName
+          geofenceRadius
+          geofence_latitude
+          geofence_longitude
           createdAt
           updatedAt
         }
         isActive
+        operation_created
+        operation_invited
         createdAt
         updatedAt
       }
@@ -71,7 +95,7 @@ export const getVehicle = /* GraphQL */ `
       longitude
       heading
       fillLevel
-      openToConnection
+      HeadingToCombine
       createdAt
       updatedAt
     }
@@ -101,7 +125,7 @@ export const listVehicles = /* GraphQL */ `
         longitude
         heading
         fillLevel
-        openToConnection
+        HeadingToCombine
         createdAt
         updatedAt
       }
@@ -129,11 +153,23 @@ export const getConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
-          openToConnection
+          HeadingToCombine
+          createdAt
+          updatedAt
+        }
+        geofenceSettings {
+          id
+          userID
+          geofenceName
+          geofenceRadius
+          geofence_latitude
+          geofence_longitude
           createdAt
           updatedAt
         }
         isActive
+        operation_created
+        operation_invited
         createdAt
         updatedAt
       }
@@ -151,11 +187,23 @@ export const getConnection = /* GraphQL */ `
           longitude
           heading
           fillLevel
-          openToConnection
+          HeadingToCombine
+          createdAt
+          updatedAt
+        }
+        geofenceSettings {
+          id
+          userID
+          geofenceName
+          geofenceRadius
+          geofence_latitude
+          geofence_longitude
           createdAt
           updatedAt
         }
         isActive
+        operation_created
+        operation_invited
         createdAt
         updatedAt
       }
@@ -183,6 +231,8 @@ export const listConnections = /* GraphQL */ `
           email
           phone
           isActive
+          operation_created
+          operation_invited
           createdAt
           updatedAt
         }
@@ -192,6 +242,8 @@ export const listConnections = /* GraphQL */ `
           email
           phone
           isActive
+          operation_created
+          operation_invited
           createdAt
           updatedAt
         }
@@ -222,11 +274,23 @@ export const getActivityOverview = /* GraphQL */ `
           longitude
           heading
           fillLevel
-          openToConnection
+          HeadingToCombine
+          createdAt
+          updatedAt
+        }
+        geofenceSettings {
+          id
+          userID
+          geofenceName
+          geofenceRadius
+          geofence_latitude
+          geofence_longitude
           createdAt
           updatedAt
         }
         isActive
+        operation_created
+        operation_invited
         createdAt
         updatedAt
       }
@@ -244,11 +308,23 @@ export const getActivityOverview = /* GraphQL */ `
           longitude
           heading
           fillLevel
-          openToConnection
+          HeadingToCombine
+          createdAt
+          updatedAt
+        }
+        geofenceSettings {
+          id
+          userID
+          geofenceName
+          geofenceRadius
+          geofence_latitude
+          geofence_longitude
           createdAt
           updatedAt
         }
         isActive
+        operation_created
+        operation_invited
         createdAt
         updatedAt
       }
@@ -276,6 +352,8 @@ export const listActivityOverviews = /* GraphQL */ `
           email
           phone
           isActive
+          operation_created
+          operation_invited
           createdAt
           updatedAt
         }
@@ -285,9 +363,227 @@ export const listActivityOverviews = /* GraphQL */ `
           email
           phone
           isActive
+          operation_created
+          operation_invited
           createdAt
           updatedAt
         }
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getCords = /* GraphQL */ `
+  query GetCords($id: ID!) {
+    getCords(id: $id) {
+      latitude
+      longitude
+      id
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listCords = /* GraphQL */ `
+  query ListCords(
+    $filter: ModelCordsFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listCords(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        latitude
+        longitude
+        id
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getPlace = /* GraphQL */ `
+  query GetPlace($id: ID!) {
+    getPlace(id: $id) {
+      id
+      name
+      created_By_User_With_ID
+      created_By_User {
+        id
+        userName
+        email
+        phone
+        vehicle {
+          id
+          userID
+          userMail
+          type
+          latitude
+          longitude
+          heading
+          fillLevel
+          HeadingToCombine
+          createdAt
+          updatedAt
+        }
+        geofenceSettings {
+          id
+          userID
+          geofenceName
+          geofenceRadius
+          geofence_latitude
+          geofence_longitude
+          createdAt
+          updatedAt
+        }
+        isActive
+        operation_created
+        operation_invited
+        createdAt
+        updatedAt
+      }
+      placeCords
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listPlaces = /* GraphQL */ `
+  query ListPlaces(
+    $filter: ModelPlaceFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listPlaces(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        name
+        created_By_User_With_ID
+        created_By_User {
+          id
+          userName
+          email
+          phone
+          isActive
+          operation_created
+          operation_invited
+          createdAt
+          updatedAt
+        }
+        placeCords
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getGeofenceSetting = /* GraphQL */ `
+  query GetGeofenceSetting($userID: ID!) {
+    getGeofenceSetting(userID: $userID) {
+      id
+      userID
+      geofenceName
+      geofenceRadius
+      geofence_latitude
+      geofence_longitude
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listGeofenceSettings = /* GraphQL */ `
+  query ListGeofenceSettings(
+    $userID: ID
+    $filter: ModelGeofenceSettingFilterInput
+    $limit: Int
+    $nextToken: String
+    $sortDirection: ModelSortDirection
+  ) {
+    listGeofenceSettings(
+      userID: $userID
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      sortDirection: $sortDirection
+    ) {
+      items {
+        id
+        userID
+        geofenceName
+        geofenceRadius
+        geofence_latitude
+        geofence_longitude
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getParticipant = /* GraphQL */ `
+  query GetParticipant($OperationId: ID!) {
+    getParticipant(OperationId: $OperationId) {
+      OperationId
+      UserId
+      VehicleType
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listParticipants = /* GraphQL */ `
+  query ListParticipants(
+    $OperationId: ID
+    $filter: ModelParticipantFilterInput
+    $limit: Int
+    $nextToken: String
+    $sortDirection: ModelSortDirection
+  ) {
+    listParticipants(
+      OperationId: $OperationId
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      sortDirection: $sortDirection
+    ) {
+      items {
+        OperationId
+        UserId
+        VehicleType
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getOperation = /* GraphQL */ `
+  query GetOperation($id: ID!) {
+    getOperation(id: $id) {
+      id
+      CreatorId
+      OperationName
+      Participants
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listOperations = /* GraphQL */ `
+  query ListOperations(
+    $filter: ModelOperationFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listOperations(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        CreatorId
+        OperationName
+        Participants
         createdAt
         updatedAt
       }

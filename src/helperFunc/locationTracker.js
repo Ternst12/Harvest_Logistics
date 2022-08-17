@@ -1,11 +1,10 @@
 import { useEffect, useState} from "react"
-import { View, Text, } from "react-native"
+import { View, Text, Platform} from "react-native"
 import * as TaskManager from "expo-task-manager"
 import * as Location from "expo-location"
 
 import { useDispatch, useSelector } from "react-redux"
 import { selectDriverID, setOrgin } from "../redux/Slices"
-import * as Device from 'expo-device';
 import { updateVehicle } from "../graphql/mutations";
 import {API, graphqlOperation } from 'aws-amplify'
 
@@ -13,8 +12,25 @@ import {API, graphqlOperation } from 'aws-amplify'
 const LocationTracker = props =>{
 
     const {locationTracking, setLocationTraking} = useState("Location tracking of")
-
     const driverID = useSelector(selectDriverID)
+
+    const updateLocationDB = async(location) =>
+    {
+    try {
+        const result = await API.graphql(graphqlOperation(updateVehicle, {
+            input: {
+                userID: driverID, 
+                latitude: location.coords.latitude, 
+                longitude: location.coords.longitude
+            }
+            }))
+        if(result.data.updateVehicle) {
+            
+        }
+        } catch (error) {
+            console.log("Location Update lykkes ikke ", error)
+        }
+    }
 
     const dispatch = useDispatch()
 
@@ -24,7 +40,7 @@ const LocationTracker = props =>{
     // Define the background task for location tracking
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
     if (error) {
-        console.error(error)
+        console.error("Taskmanager Location_TASK_NAME = ", error)
         return
     }
     if (data) {
@@ -46,14 +62,27 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
 
     // Start location tracking in foreground
     const startForegroundUpdate = async () => {
-
-
-        // Check if foreground permission is granted
-        const { granted } = await Location.getForegroundPermissionsAsync()
-        if (!granted) {
-        console.log("location tracking denied")
-        return
-        }
+        
+        try {
+            if(Platform.OS == "ios") {
+                console.log("hallo")
+                const test = await Location.getBackgroundPermissionsAsync()
+                console.log("test = ", test)
+            }
+            
+            const background = await Location.requestBackgroundPermissionsAsync()
+            console.log("background = ", background)
+                if(background.granted) {
+                    console.log("background permission granted")
+                    startBackgroundUpdate() 
+                } else {
+                    console.log("background permission not granted")
+                    return;
+                }
+            } catch (e) {
+                console.log("Problem with background function = ", e)
+            }
+        
 
         // Make sure that foreground location tracking is not running
         foregroundSubscription?.remove()
@@ -63,24 +92,16 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
         {
             // For better logs, we set the accuracy to the most sensitive option
             accuracy: Location.Accuracy.BestForNavigation,
+            timeInterval: 1000
         },
         location => {
             dispatch(setOrgin({
                 lat: location.coords.latitude,
                 lng: location.coords.longitude,
             }))
-
-            try {
-                API.graphql(graphqlOperation(updateVehicle, {
-                    input: {
-                        userID: driverID, 
-                        latitude: location.coords.latitude, 
-                        longitude: location.coords.longitude
-                    }
-                    }))
-                } catch (error) {
-                    console.log("Location Update lykkes ikke ", error)
-                }
+            
+            updateLocationDB(location)
+           
             }          
         )        
     }
@@ -118,18 +139,23 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
         console.log("Already started")
         return
         }
+        
+        try {
 
-        await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        // For better logs, we set the accuracy to the most sensitive option
-        accuracy: Location.Accuracy.BestForNavigation,
-        // Make sure to enable this notification if you want to consistently track in the background
-        showsBackgroundLocationIndicator: true,
-        foregroundService: {
-            notificationTitle: "Location",
-            notificationBody: "Location tracking in background",
-            notificationColor: "#fff",
-        },
-        })
+            await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+            // For better logs, we set the accuracy to the most sensitive option
+            accuracy: Location.Accuracy.BestForNavigation,
+            // Make sure to enable this notification if you want to consistently track in the background
+            showsBackgroundLocationIndicator: true,
+            foregroundService: {
+                notificationTitle: "Location",
+                notificationBody: "Location tracking in background",
+                notificationColor: "#fff",
+            },
+            })
+        } catch (e) {
+            console.warn("Problems with startLocationUpdatesAsync", e)
+        }
     }
 
     const stopBackgroundUpdate = async () => {
@@ -148,14 +174,6 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error}) => {
             if (foreground.granted) {
                 console.log("foreground permission granted")
                 startForegroundUpdate()
-                const background = await Location.requestBackgroundPermissionsAsync()
-                if(background.granted) {
-                    console.log("background permission granted")
-                    startBackgroundUpdate() 
-                    return;
-                } else {
-                    return;
-                }
             } else {
                 console.log("Permission not granted = ", foreground)
             }

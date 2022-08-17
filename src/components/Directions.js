@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { apikey } from "../google/apikey";
 import MapViewDirections from 'react-native-maps-directions';
 
@@ -29,9 +29,11 @@ const convertMeters = (meter) => {
 
 export const Directions = props => {
 
+  const [array, setArray] = useState([])
 
 return (
 <MapViewDirections
+            
             origin={{
                 latitude: props.location.lat,
                 longitude: props.location.lng
@@ -40,19 +42,25 @@ return (
                 latitude: props.markerCord.lat,
                 longitude: props.markerCord.lng
             }}
-            mode="DRIVING"
+            mode="BICYCLING"
             apikey={apikey}
-            strokeWidth={3}
-            strokeColor="hotpink"
             onStart={(params) => {
-              
             }}
             onReady={result => {
-             
-              props.setDistance(convertMeters(result.distance))
-             
-              props.setDuration(convertMinuts(result.duration))
-              }}        
+              
+                var testArray = [...props.directionInfoArray]
+                if(testArray[props.index].id == props.id)
+                  {
+                    testArray[props.index].duration = convertMinuts(result.duration)
+                    testArray[props.index].distance = convertMeters(result.distance)
+                    testArray[props.index].meters = result.distance
+                  }
+            
+                props.setDirectionInfoArray(testArray)             
+                props.setDistance(convertMeters(result.distance))            
+                props.setDuration(convertMinuts(result.duration))
+              
+              }}       
             onError={(errorMessage) => {
               console.log(errorMessage)
             }}

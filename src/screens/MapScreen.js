@@ -1,164 +1,202 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { View, StyleSheet, Text, TouchableOpacity, Keyboard, Image} from "react-native";
-import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
-import { useSelector } from "react-redux";
+import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
+import { View, StyleSheet, Text, TouchableOpacity, Image, Alert} from "react-native";
+import MapView, {PROVIDER_GOOGLE, Marker, Circle} from 'react-native-maps';
+import { useSelector, useDispatch } from "react-redux";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Directions } from "../components/Directions";
-import { selectOrigin, selectDriverInformation, selectDriverName, selectDriverID} from "../redux/Slices";
+import { selectOrigin, selectDriverInformation, selectDriverID, selectGeofenceActive, selectIsStopWatchStart, selectGeofenceName, selectGeofenceRadius, selectResetStopWatch, selectGeofenceCord, setGeofenceCord, selectDriverName, selectParticipants, selectDistanceArray} from "../redux/Slices";
 import Messagebox from "../components/Messagebox";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
 import { openMaps } from "../helperFunc/openMaps";
 import Colors from "../constants/Colors";
 import FillLevelSlider from "../components/FillLevelSlider";
 import { API, graphqlOperation} from "aws-amplify";
-import { listVehicles } from "../graphql/queries";
-import { createConnection } from "../graphql/mutations";
-import { onUpdateVehicle, onCreateConnection } from "../graphql/subscriptions";
+import {  getVehicle } from "../graphql/queries";
 import InformationWhitebox from "../components/InformationWhiteBox";
 import StopButton from "../components/StopButton";
-import { SettingOpenToConnection } from "../helperFunc/SettingOpenToConnections";
+import { geofenceCheck, startGeofencing, stopGeofencing } from "../helperFunc/GeoFencing";
+import LottieView from 'lottie-react-native';
+import { distanceMeasurement } from "../helperFunc/findPlace";
+import { Feather } from '@expo/vector-icons';
 
 const MapScreen = (props) => {
 
     const driverID = useSelector(selectDriverID)
-
+    const geofenceActive = useSelector(selectGeofenceActive)
     const origin = useSelector(selectOrigin)
     const driverInformation = useSelector(selectDriverInformation)
+    const geofenceCord = useSelector(selectGeofenceCord)
+    const geofenceName = useSelector(selectGeofenceName)
+    const geofenceRadius = useSelector(selectGeofenceRadius)
+    const driverName = useSelector(selectDriverName)
+    const participants = useSelector(selectParticipants)
+    const distanceArray = useSelector(selectDistanceArray)
 
-    const tractorIcon = require("../images/tractor.png")
-    const combineIcon = require("../images/harvester.png")
+    const tractorIcon = require("../images/logistics_tractor.png")
+    const combineIcon = require("../images/logistics_combine_transparent.png")
 
     const [markerCord, setMarkerCord] = useState(null)
     const [selectedVehicleID, setSelectedVehicleID] = useState(null)
-    const [connectedToTractor, setConnectedToTractor] = useState(false)
     const [distance, setDistance] = useState("")
-    const [duration, setDuration] = useState("")
+    const [duration, setDuration] = useState(0)
+    const [directionInfoArray, setDirectionInfoArray] = useState([])
     const [showMessagebox, setShowMessagebox] = useState(false)
     const [fillLevel, setFillLevel] = useState(0)
-    const [shownFillLevel, setShownFillLevel] = useState(0)
-    const [choosenMarkerTitle, setChoosenMarkerTitle] = useState("")
+    const [choosenMarkerTitle, setChoosenMarkerTitle] = useState(null)
     const [operationStarted, setOperationStarted] = useState(false)
-    const [subscription, setSubscription] = useState(null)
+    const [geofenceCheckColor, setGeofenceCheckColor] = useState(false)
+    const [radar, setRadar] = useState(false)
+    const [loadedVehicles, setLoadedVehicles] = useState(false)
+    const [fetchInterval, setFetchInterval] = useState(null)
+    const [mapHeight, setMapHeight] = useState("100%")
+    const [combineInfo, setCombineInfo] = useState(null)
 
     const [vehicle, setVehicle] = useState([])
 
     const mapRef = useRef(null)
+    const circleRef = useRef(null)
+    const dispatch = useDispatch()
 
-    useEffect(() => {
-        if(driverInformation == "combine") {
-        const subscription = API.graphql(graphqlOperation(onCreateConnection, {driverTwo_UserID: driverID}))
-            .subscribe({
-                next: ({ value }) => {
-                    setConnectedToTractor(true)
-                    console.log("There has been created a connection = ", value.data.onCreateConnection.driverTwo_UserID, " my userID is = ", driverID)
-                    SettingOpenToConnection(driverID, true)
-                    if(driverID == value.data.onCreateConnection.driverTwo_UserID) {
-                        console.log("The other drivers lat and lng = " + value.data.onCreateConnection.driverOne_UserProfile.vehicle.latitude + " : " + value.data.onCreateConnection.driverOne_UserProfile.vehicle.longitude + " /n "
-                        + "My own lat and lng = " + value.data.onCreateConnection.driverTwo_UserProfile.vehicle.latitude + " : " + value.data.onCreateConnection.driverTwo_UserProfile.vehicle.longitude)
-                        setMarkerCord({
-                            lat: value.data.onCreateConnection.driverOne_UserProfile.vehicle.latitude,
-                            lng: value.data.onCreateConnection.driverOne_UserProfile.vehicle.longitude
-                        })
-                        subscribeToVehicle(value.data.onCreateConnection.driverOne_UserID)
-                        fetchVehicles()
-                        setChoosenMarkerTitle(value.data.onCreateConnection.driverOne_UserProfile.email)
-                    }
-                },
-                error: error => console.warn("There has been an subscription error regarding connections with user = ", driverID, " the error = ", error),
-                complete: () => {console.log("Subscription has been cancelled"); setMarkerCord(null); setSubscription(null) }
-            })
+    const testAsync = async (testArray) => {
+      
+        var newArray = testArray
+
+        const result2 = await Promise.all(vehicle.map(async(v) => { 
+               const coordinates = {
+                   lng: v.longitude,
+                   lat: v.latitude
+               }
+               const result = await distanceMeasurement(origin, coordinates, 30)
+              
+               const index_of = newArray.findIndex(object => {
+                return object.id == v.userID;
+                });
+                const userName = newArray[index_of].name
+                const userVehicle = newArray[index_of].vehicle
+                const userId = newArray[index_of].id
+                newArray.splice(index_of, 1, {
+                    distance: result.value,
+                    duration: result.time,
+                    meters: result.value,
+                    vehicle: userVehicle,
+                    id: userId,
+                    name: userName
+                })
+                
+            }))
+            
+            setDirectionInfoArray(newArray)
+            return;
+         }
+
+
+    const fetchVehicles = async() => {
+        geofenceCheck(setGeofenceCheckColor)
+        if(driverInformation == "tractor") {
+            const combineId = await participants.find((item) => {return item.vehicle == "combine"})
+            const combineInfoPlaceHolder = await API.graphql(graphqlOperation(getVehicle, {userID: combineId.id}))
+            setCombineInfo(combineInfoPlaceHolder.data.getVehicle)
+            const coordinates = {
+                lng: combineInfoPlaceHolder.data.getVehicle.longitude,
+                lat: combineInfoPlaceHolder.data.getVehicle.latitude
+            }
+            const result = await distanceMeasurement(origin, coordinates, 30)
+            console.log("distance to combine = ", result.value)
+            setDistance(result.value)
+            setDuration(result.time)
+            setFillLevel(combineInfoPlaceHolder.data.getVehicle.fillLevel)
         }
-        
-        setSubscription(subscription)
-    }, [])
-
-    const createConnectionToVehicle = async(driverID, selectedVehicleID) => {
-       const response = await API.graphql(graphqlOperation(createConnection, {
-           input: {driverOne_UserID: driverID, driverTwo_UserID: selectedVehicleID}
+        var vehicileArray = []
+        const resultVehicle = await Promise.all(participants.map(async(p) => {
+            try {
+                const participant = await API.graphql(
+                    graphqlOperation(getVehicle, {userID: p.id})
+                    )
+                vehicileArray.push(participant.data.getVehicle)
+            } catch(error) {
+                console.error("problemer med at fetche participants = ", error)
+            } 
+            return vehicileArray;
         }))
-    }
-
-    const fetchVehicles = async () => {
-        try {
-            const response = await API.graphql(
-                graphqlOperation(listVehicles)
-                )
-            var allVehicles = response.data.listVehicles.items
-            var filteredVehicles = allVehicles.filter((item) => item.userID != driverID)
-            console.log("filter = ", filteredVehicles)
-            setVehicle(filteredVehicles) //sortere brugeren fra listen, så det kun er en liste over andre brugere
-        } catch(error) {
-            console.log("problemer med at fetche = ", error)
+        if(resultVehicle[0].length > 0) {
+            setLoadedVehicles(true)
+            var today = new Date()
+            var time = today.toLocaleTimeString()
+            setVehicle(resultVehicle[0])
         }
-    }
-
-    const subscribeToVehicle = (userID) => {
-        console.log("My own userId = ", driverID,  " the others userID = ", userID)
-        setOperationStarted(true)
-        const subscription = API.graphql(
-            graphqlOperation(onUpdateVehicle, {userID: userID})
-          ).subscribe({
-            next: ({ value }) => {
-                if(userID == value.data.onUpdateVehicle.userID)            
-                {
-                    setMarkerCord({
-                        lat: value.data.onUpdateVehicle.latitude,
-                        lng: value.data.onUpdateVehicle.longitude
-                    })
-                    if(value.data.onUpdateVehicle.type != "tractor"){
-                    setFillLevel(value.data.onUpdateVehicle.fillLevel)
-                    }
-                    if(value.data.onUpdateVehicle.openToConnection == false){
-                        console.log("cancel sub")
-                        SettingOpenToConnection(driverID, false)
-                        subscription.unsubscribe()
-                        setMarkerCord(null)
-                        setOperationStarted(false)
-                    }
-                }
-            },
-            error: error => console.warn("There has been an subscription error with user = ", driverID, " userId = ", userID, " the error = ", error),
-            complete: () => {console.log("Subscription has been cancelled"); setMarkerCord(null); setSubscription(null) }
-          })    
-          setSubscription(subscription)
     }
 
 
     useEffect(() => {
-        if(!origin || !markerCord){
+        if(!origin || choosenMarkerTitle == null){
             return;
         } else {
-
-            setTimeout(() => {
-                mapRef.current.fitToSuppliedMarkers(["origin", choosenMarkerTitle], {
-                    edgePadding: {top: screenWidth > 400 ? 300 : 100, right: screenWidth > 400 ? 300 : 100, bottom: screenWidth > 400 ? 300 : 100, left: screenWidth > 400 ? 300 : 100}
-                })
-            }, 6000)
+            mapRef.current.fitToSuppliedMarkers(["origin", choosenMarkerTitle], {
+                edgePadding: {top: screenWidth > 400 ? 300 : 100, right: screenWidth > 400 ? 300 : 100, bottom: screenWidth > 400 ? 300 : 100, left: screenWidth > 400 ? 300 : 100}
+            })
+           
         }
-    }, [origin, markerCord])
+    }, [origin, choosenMarkerTitle])
+
+    const zoomOut = () => {
+        console.log("vehicle = ", vehicle)
+        if(driverInformation == "combine"){
+            const highestNumber = Math.max(...directionInfoArray.map(o => o.meters))
+            const resultLongestDistance = directionInfoArray.find(o => o.meters == highestNumber)
+            if(resultLongestDistance != undefined) {
+                setChoosenMarkerTitle(resultLongestDistance.id)
+            }
+        } else {
+      
+               setChoosenMarkerTitle(combineInfo.userID)           
+        }
+
+    }
+
 
     useLayoutEffect(() => {
         props.navigation.setOptions({
             headerRight: () => 
-            (driverInformation == "tractor" ? 
-                <TouchableOpacity onPress={() =>{fetchVehicles() /* requestDriver(socket, setMarkerCord, setShowMessagebox, showMessagebox, setCombineArray)} */}}>
-                    <Text style={{fontSize: screenWidth > 400 ? 22 : 20, marginRight: 20, color: "white"}}>Find</Text>
-                </TouchableOpacity> : 
-                <View>
-                    <Text style={{fontSize: screenWidth > 400 ? 22 : 20, marginRight: 20, color: "white"}}>{connectedToTractor ? "Connected" : "No connection"}</Text>
+           
+                <View style={{flexDirection: "row"}}>
+                {!radar ?
+                    <TouchableOpacity onPress={() =>{const interval = setInterval(() => {fetchVehicles();}, 1500); setFetchInterval(interval); setRadar(true); setOperationStarted(true)}}>
+                        <Text style={{fontSize: screenWidth > 400 ? 22 : 20, marginRight: 20, color: geofenceCheckColor ? "blue" : "white"}}>Find</Text>
+                    </TouchableOpacity> 
+                    :
+                    <View style={{flexDirection: "row", width: "50%", alignItems: "center", justifyContent: "space-between"}}>
+                        <TouchableOpacity onPress={() => zoomOut()}>
+                            <Feather name="zoom-in" size={40} color={geofenceCheckColor ? Colors.androidGreen : Colors.summerWhite} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => {clearInterval(fetchInterval)}}>
+                            <LottieView style={{width: 40, height: 40, marginRight: 20}} autoPlay={true} loop={true} source={require("../lottie/radar.json")}/>
+                        </TouchableOpacity>
+                    </View>
+                }
                 </View>
-            )
+              
              
         })
     })
+    
+    useEffect(() => {
+        setDirectionInfoArray(distanceArray)
+    }, [])
 
+    useEffect(() => {
+        if(operationStarted) {
+        var testArray = [...directionInfoArray]
+        testAsync(testArray)
+        }
+    }, [vehicle])
     
   return (
     <View style={{height: "100%", width: "100%"}}>
       <MapView
-        
+        onPress={() => {console.log("pressed"), setChoosenMarkerTitle(null)}}
+        onPanDrag={() => {setChoosenMarkerTitle(null)}}
         ref={mapRef}
-        style={{width: '100%', height: '100%'}}
+        style={{width: '100%', height: mapHeight}}
         provider={PROVIDER_GOOGLE}
         showsUserLocation={true}
         mapType="hybrid"
@@ -168,7 +206,6 @@ const MapScreen = (props) => {
           latitudeDelta: 0.0222,
           longitudeDelta: 0.0121,
         }}
-
         >
 
         <Marker
@@ -180,39 +217,67 @@ const MapScreen = (props) => {
 
         </Marker>
 
-        {vehicle.map((vehicle) => { 
+        {geofenceActive ?
+        <Circle 
+         ref={circleRef}
+         onLayout={() => (circleRef.current.setNativeProps({
+           strokeColor: 'rgba(40,246,67,0.6',
+           fillColor: 'rgba(246,205,40,0.8)',
+         }))}
+        center={{latitude: geofenceCord.lat, longitude: geofenceCord.lng}} 
+        radius={geofenceRadius}
+        fillColor={'rgba(40,246,67,0.6)'}
+        strokeColor={'rgba(246,205,40,0.8)'}
+        />
+        : null
+        }
+        {geofenceActive ?
+        <Marker 
+        draggable={true}
+        onDragStart={() => {
+            stopGeofencing()
+            geofenceCheck(setGeofenceCheckColor)
+        }}
+        onDragEnd={(e) => {
+            console.log("DragEnd = ", e.nativeEvent.coordinate.latitude)
+            dispatch(setGeofenceCord({
+                lat: e.nativeEvent.coordinate.latitude,
+                lng: e.nativeEvent.coordinate.longitude
+            })
+            )
+            var PlaceHolder = {
+                lat: e.nativeEvent.coordinate.latitude,
+                lng: e.nativeEvent.coordinate.longitude
+            }
+            startGeofencing(PlaceHolder, geofenceName, geofenceRadius)
+            geofenceCheck(setGeofenceCheckColor)
+        }}
+        coordinate={{
+            latitude: geofenceCord.lat, 
+            longitude: geofenceCord.lng
+        }}
+        title={geofenceName}
+        >
+            <Image source={require("../images/barn.png")} style={{width: screenWidth * 0.10, height: screenWidth * 0.125}}/>
+        </Marker>
+        : null
+        }
+
+            {loadedVehicles ? vehicle.map((vehicle) => { 
+               
                 return(
                         <Marker
                         key={vehicle.id}
-                        coordinate={{latitude: markerCord ? markerCord.lat : vehicle.latitude, longitude: markerCord ? markerCord.lng : vehicle.longitude}}
-                        onPress={() => {
-                            setMarkerCord({
-                                lat: vehicle.latitude,
-                                lng: vehicle.longitude
-                            })
-                            setChoosenMarkerTitle(vehicle.userMail)
-                            setSelectedVehicleID(vehicle.userID)
-                            setShowMessagebox(true)
-                        }}
-                        title={vehicle.userMail}
-                        identifier={vehicle.userMail}
-                        >
+                        coordinate={{latitude: vehicle.latitude, longitude: vehicle.longitude}}
                         
-                                <Image
-                                    style={{
-                                    width: 70,
-                                    height: 70,
-                                    resizeMode: 'contain',
-                                    }}
-                                    source={vehicle.type == "tractor" ? tractorIcon : combineIcon}
-                                />
-                
+                        title={vehicle.userID}
+                        identifier={vehicle.userID}
+                        >
+                            <Image style={styles.vehicleIcon} source={driverInformation == "combine" ? tractorIcon : vehicle.userID == combineInfo.userID ? combineIcon : tractorIcon}/>          
                         </Marker>
                 )
-      })}
-         {markerCord && markerCord != "No input yet"  ? 
-         <Directions location={origin} markerCord={markerCord} setDistance={setDistance} setDuration={setDuration}/>
-        : null}
+            })
+            : null}
         </MapView>
     
         {showMessagebox ? 
@@ -226,14 +291,14 @@ const MapScreen = (props) => {
                 markerCord={markerCord}
                 origin={origin}
                 driverID={driverID}
-                subscribeToVehicle={subscribeToVehicle}
-                createConnectionToVehicle={createConnectionToVehicle}
                 selectedVehicleID={selectedVehicleID}
                 setShownFillLevel={setShownFillLevel}
+                setVehicle={setVehicle}
                />
             </View>:
             null
         }
+
         {markerCord && markerCord != "No input yet"  ?
         <View style={styles.mapIcon}>
             <MaterialCommunityIcons name="google-maps" size={screenWidth > 400 ? 74 : 44} color={Colors.summerYellow} onLongPress={() => openMaps(markerCord)}/>
@@ -247,11 +312,15 @@ const MapScreen = (props) => {
         null
         }
         {operationStarted ?
-       <InformationWhitebox driverInformation={driverInformation} distance={distance} duration={duration} fillLevel={fillLevel}/>
+        <InformationWhitebox driverInformation={driverInformation} directionInfoArray={directionInfoArray} setMapHeight={setMapHeight} distance={distance} duration={duration} fillLevel={fillLevel}/>
         :
         null
         }
-        <StopButton setOperationStarted={setOperationStarted} driverID={driverID} subscription={subscription} setMarkerCord={setMarkerCord} setConnectedToTractor={setConnectedToTractor}/>
+        {operationStarted ?
+        <StopButton setOperationStarted={setOperationStarted} driverID={driverID} interval={fetchInterval} navigation={props.navigation}/>
+        : 
+        null
+        }
     </View>
   );
 };
@@ -312,9 +381,37 @@ const styles = StyleSheet.create({
     combineInfoText : {
         fontSize: 24,
         fontWeight: "700"
+    },
+    buttonText: {
+        fontSize: 20,
+        marginTop: 10,
+      },
+    stopwatch: {
+        position: "absolute",
+        bottom: "20%",
+        left: "5%"
+    },
+    vehicleIcon: {
+        width: 40,
+        height: 40,
+        resizeMode: 'contain',
     }
-
-
 })
+
+const options = {
+    container: {
+      backgroundColor: '#FF0000',
+      padding: 5,
+      borderRadius: 5,
+      width: 200,
+      alignItems: 'center',
+      opacity: 0.7
+    },
+    text: {
+      fontSize: 25,
+      color: '#FFF',
+      marginLeft: 7,
+    },
+}
 
 export default MapScreen;

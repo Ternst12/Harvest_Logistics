@@ -5,19 +5,16 @@ import { createStackNavigator } from '@react-navigation/stack'
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import MapScreen from "../screens/MapScreen";
 import CustomDrawer from "./CostumDrawer";
-import LoginScreen from "../screens/LoginScreen";
+import CreateOperation1 from "../screens/CreateOperation1";
+import CreateOperation2 from "../screens/CreateOperation2";
 import AuthScreen from "../screens/AuthScreen";
-import { screenWidth } from "../constants/Dimensions";
+import GeofenceSettingsScreen from "../screens/GeofenceSettingsScreen";
+import { screenHeight, screenWidth } from "../constants/Dimensions";
 
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 
-const DummyScreen = (props) => (
-  <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-    <Text>{props.name}</Text>
-  </View>
-)
 
 const DrawerNavigator = (props) => {
   return (
@@ -29,7 +26,7 @@ const DrawerNavigator = (props) => {
         name="HomeMap" 
         component={MapScreen} 
         options={{
-          title: "Logistics",
+          title: "MAP",
           headerStyle: {
             backgroundColor: "black",
             opacity: 0.8
@@ -43,22 +40,23 @@ const DrawerNavigator = (props) => {
         }}
         />
 
-        <Drawer.Screen name="Your Trips">
-           {() => <DummyScreen name={"Your Trips"} />}
-        </Drawer.Screen>
-
-        <Drawer.Screen name="Help">
-          {() => <DummyScreen name={"Help"} />}
-        </Drawer.Screen>
-
-        <Drawer.Screen name="Wallet">
-          {() => <DummyScreen name={"Wallet"} />}
-        </Drawer.Screen>
-
-        <Drawer.Screen name="Settings">
-          {() => <DummyScreen name={"Settings"} />}
-        </Drawer.Screen>
-
+        <Drawer.Screen 
+        name="GeofenceSettings" 
+        component={GeofenceSettingsScreen}
+        options={{
+          title: "Geofence Settings",
+          headerStyle: {
+            backgroundColor: "black",
+            opacity: 0.8
+          },
+          headerTintColor: "white", 
+          headerTitleStyle: {
+            fontWeight: "bold",
+            fontSize: screenWidth > 400 ? 22 : 20
+          }
+        }}
+        />
+           
       </Drawer.Navigator>
   );
 };
@@ -68,7 +66,37 @@ const RootNavigator = (props) => {
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen name="Auth" component={AuthScreen} options={{headerShown: false}}/>
-        <Stack.Screen name="Login" component={LoginScreen} options={{headerShown: false}}/>
+        <Stack.Screen name="CreateOperation1" 
+        component={CreateOperation1} 
+        options={{
+          headerShown: true,
+          title: "New Operation",
+          headerTitleStyle: {
+            fontWeight: "bold",
+            fontSize: screenWidth > 400 ? 30 : 22
+          },
+          headerBackTitle: "Back",
+          headerBackTitleStyle: {
+            fontSize: screenWidth > 400 ? 26 : 18
+          }
+          }} />
+           <Stack.Screen name="CreateOperation2" 
+        component={CreateOperation2} 
+        options={{
+          headerShown: true,
+          title: "New Operation",
+          headerTitleStyle: {
+            fontWeight: "bold",
+            fontSize: screenWidth > 400 ? 30 : 22
+          },
+          headerBackTitle: "Back",
+          headerBackTitleStyle: {
+            fontSize: screenWidth > 400 ? 26 : 18
+          },
+          headerStyle: {
+            height: screenHeight * 0.08
+          }
+          }} />
      
         <Stack.Screen 
         name="Home" 

@@ -33,7 +33,7 @@ const Messagebox = props => {
                             props.createConnectionToVehicle(props.driverID, props.selectedVehicleID) 
                             props.setShowMessagebox(false)   
                             SettingOpenToConnection(props.driverID, true)   
-                             
+                            props.setVehicle([])
                         }}>
                             <Text style={styles.buttonText}>Yes</Text>
                         </TouchableOpacity>
