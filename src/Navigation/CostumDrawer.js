@@ -1,15 +1,15 @@
 import React, {useState} from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { selectDriverEmail, selectDriverInformation, selectDriverName, selectGeofenceCord, selectGeofenceName, selectGeofenceRadius, selectNetInfo } from "../redux/Slices";
-import { View, Text, Pressable, Switch, StyleSheet } from "react-native";
+import { selectDriverEmail, selectDriverInformation, selectDriverName, selectGeofenceCord, selectGeofenceName, selectGeofenceRadius, selectNetInfo, selectTractorSpeed, selectCombineLocation, selectTravlingToCombine, setCurrentTaskName, selectCurrentTaskName } from "../redux/Slices";
+import { View, Text, Pressable, Switch, StyleSheet, TouchableOpacity, Image } from "react-native";
 import {DrawerContentScrollView, DrawerItemList} from '@react-navigation/drawer';
 import { Auth } from "aws-amplify";
-import { setGeofenceActive, setIsStopWatchStart, setResetStopWatch } from "../redux/Slices";
+import { setGeofenceActive, setTractorSpeed } from "../redux/Slices";
 import { startGeofencing, stopGeofencing} from "../helperFunc/GeoFencing";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
 import Carousel from 'react-native-snap-carousel';
 import Colors from "../constants/Colors";
-import CarouselCardItem from "../components/CarouselCardItem";
+
 
 export const signOut = async() => {
   try {
@@ -31,7 +31,24 @@ const CustomDrawer = (props) => {
   const geofenceName = useSelector(selectGeofenceName)
   const geofenceRadius = useSelector(selectGeofenceRadius)
   const NetInfo = useSelector(selectNetInfo)
+  const tractorSpeed = useSelector(selectTractorSpeed)
+  const travellingToCombine = useSelector(selectTravlingToCombine)
+  const combineLocation = useSelector(selectCombineLocation)
+  const currentTaskName = useSelector(selectCurrentTaskName)
+
   const dispatch = useDispatch()
+
+  const CarouselCardItem = ({item, index}) => {
+
+    return(
+        <View>
+            <TouchableOpacity onLongPress={() => {dispatch(setTractorSpeed(item.speed))}} >
+                <Image source={item.source} style={{width: 150, height: 150}} />
+            </TouchableOpacity>
+        </View>
+
+    )
+}
 
   const SpeedSigns = [
     {
@@ -67,15 +84,17 @@ const CustomDrawer = (props) => {
   const toggleSwitch = () => {
     setEnable(previousState => !previousState);
     if(enable == false){
-      dispatch(setIsStopWatchStart(true))
-      dispatch(setResetStopWatch(false))
       dispatch(setGeofenceActive(true))
-      startGeofencing(geofenceCord, geofenceName, geofenceRadius)
+      if(combineLocation && travellingToCombine) {
+        startGeofencing(combineLocation, "Combine", 50, "GEOFENCE_TASK_HeadingToCombine")
+        dispatch(setCurrentTaskName("GEOFENCE_TASK_HeadingToCombine"))
+      } else {      
+        startGeofencing(geofenceCord, geofenceName, geofenceRadius, "GEOFENCE_TASK_HeadingToFarm")
+        dispatch(setCurrentTaskName("GEOFENCE_TASK_HeadingToFarm"))
+      }
     } else {
-    dispatch(setGeofenceActive(false))
-    dispatch(setIsStopWatchStart(false))
-    dispatch(setResetStopWatch(true))
-    stopGeofencing()
+      dispatch(setGeofenceActive(false))
+      stopGeofencing(currentTaskName)
     }
   }
 
@@ -114,7 +133,7 @@ const CustomDrawer = (props) => {
           marginVertical: 10,
         }}>
           <Pressable
-            onPress={() => {console.warn('Messages')}}>
+            onPress={() => {}}>
             <Text style={{color: '#dddddd', paddingVertical: 5,}}>Operations Overview</Text>
           </Pressable>
         </View>
@@ -135,20 +154,27 @@ const CustomDrawer = (props) => {
 
       <DrawerItemList {...props}/>
 
-      {/* Make money */}
       <Pressable onPress={() => {signOut()}}>
         <Text style={{padding: 5, paddingLeft: 20}}>Logout</Text>
       </Pressable>
+      { driverInformation == "tractor" ?
       <View style={{marginTop: 20, flexDirection: "row", justifyContent: "space-evenly"}}>
         <Text style={{fontSize: 16, color: "black"}}>GeoFencing</Text>
         <Switch value={enable} onValueChange={toggleSwitch}/>
       </View>
-      <View style={{marginTop: screenHeight * 0.05,width: "100%", alignItems: "center", borderColor: "blue", borderWidth: 1}}>
+      : null}
+      <View style={{justifyContent: "center", width: "100%", marginVertical: 40, alignItems: "center"}}>
+        <View style={{ flexDirection: "row", width: "90%"}}>
+          <Text style={styles.NetInfo_text} >Current Speedlevel : </Text>
+          <Text style={styles.NetInfo_text}>{tractorSpeed}</Text>
+        </View>
+      </View>
+      <View style={{marginTop: screenHeight * 0.05,width: "100%", alignItems: "center"}}>
         <Carousel
               inactiveSlideOpacity={0.5}
               inactiveSlideScale={0.5}
               layout="default"
-              layoutCardOffset={10}
+              layoutCardOffset={15}
               ref={isCarousel}
               data={SpeedSigns}
               renderItem={CarouselCardItem}

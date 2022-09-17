@@ -1,23 +1,26 @@
-import { useDispatch } from "react-redux";
-import React, {useState, useEffect, useCallback, useRef} from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, AppState, Alert} from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import React, {useState, useEffect, useRef} from "react";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, AppState, Alert} from "react-native";
 import Colors from "../constants/Colors";
 import { screenWidth, screenHeight } from "../constants/Dimensions";
-import { setDriverName, setDriverID, setNetInfo } from "../redux/Slices";
+import { setDriverName, setDriverID, setNetInfo, setTravellingToCombine, selectDriverID, setEntryGeofence, setExitGeofence, selectByFarm, selectByCombine } from "../redux/Slices";
 import {Auth, API, graphqlOperation } from 'aws-amplify'
-import {getOperation, getUser, listConnections} from "../graphql/queries"
-import {createUser, createVehicle, createOperation} from "../graphql/mutations"
+import {getOperation, getUser} from "../graphql/queries"
+import {createUser, createVehicle, updateVehicle} from "../graphql/mutations"
 import { setDriverEmail } from '../redux/Slices';
 import * as TaskManager from "expo-task-manager"
 import { LocationGeofencingEventType } from "expo-location";
-import {setIsStopWatchStart, setResetStopWatch} from "../redux/Slices"
+import {setTimerInterval} from "../redux/Slices"
 import OperationCard from "../components/OperationCard";
 import { useIsFocused } from "@react-navigation/native";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import LocationTracker from "../helperFunc/locationTracker";
 import { AntDesign } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { signOut} from "../Navigation/CostumDrawer";
 import NetInfo from '@react-native-community/netinfo';
+import { selectGeofenceCord, selectGeofenceName, selectGeofenceRadius, selectCombineLocation, setByCombine, setByFarm } from "../redux/Slices";
+import { stopGeofencing, startGeofencing } from "../helperFunc/GeoFencing";
+
 
 const AuthScreen = props => {
 
@@ -28,33 +31,159 @@ const AuthScreen = props => {
     const [createdOperationsArray, setCreatedOperationsArray] = useState([])
     const [invitedOperationsArray, setInvitedOperationsArray] = useState([])
     const [locationTrackerOn, setLocationTrackerOn] = useState(false)
+    const [readyToChangeDirection, setReadyToChangeDirection] = useState(false)
+    const [entryArray, setEntryArray] = useState([])
+    const [firstEntry, setFirstEntry] = useState(null)
+    const [exitArray, setExitArray] = useState([])
+    const [firstExit, setFirstExit] = useState(null)
+    const [combine, setCombine] = useState(false)
+    const [farm, setFarm] = useState(false)
+   
+
+    const geofenceCord = useSelector(selectGeofenceCord)
+    const geofenceName = useSelector(selectGeofenceName)
+    const geofenceRadius = useSelector(selectGeofenceRadius)
+    const combineLocation = useSelector(selectCombineLocation)
+    const driverID = useSelector(selectDriverID)
+    const byFarm = useSelector(selectByFarm)
+    const byCombine = useSelector(selectByCombine)
+   
 
     const isFocused = useIsFocused()
 
+    useEffect(() => {   
+          dispatch(setEntryGeofence(entryArray))
+    }, [entryArray] )
+
+    useEffect(() => {
+          dispatch(setExitGeofence(exitArray))
+    }, [exitArray] )
 
     TaskManager.defineTask(
-      "GEOFENCE_TASK",
-      ({ data: { eventType, region }, error }) => {
-  
+      "GEOFENCE_TASK_HeadingToFarm", 
+      async({ data: { eventType, region }, error }) => {
         if (error) {
           console.log(error.message)
           return;
         } else if (eventType === LocationGeofencingEventType.Enter) {
-          dispatch(setIsStopWatchStart(false))
-          dispatch(setResetStopWatch(true))
-          console.log("du er i regionen")
+            setReadyToChangeDirection(true)
+            var sec = parseInt(Date.now()/1000)
+            var time = new Date().toLocaleTimeString()
+            var obj = {
+              sec: sec,
+              time: time,
+              byFarm: true,
+              byCombine: false
+            }
+            setEntryArray(oldArray => [...oldArray, obj])
+            console.log("du er i regionen")
         }  else if (eventType === LocationGeofencingEventType.Exit) {
-         
-          dispatch(setIsStopWatchStart(true))
-          dispatch(setResetStopWatch(false))
-          console.log("Du er udenfor regionen")
+            if(readyToChangeDirection)
+            {
+              var sec = parseInt(Date.now()/1000)
+              var time = new Date().toLocaleTimeString()
+              var obj = {
+                sec: sec,
+                time: time
+              }
+              setExitArray(oldArray => [...oldArray, obj])
+              dispatch(setTravellingToCombine(true))
+              await stopGeofencing( "GEOFENCE_TASK_HeadingToFarm")
+              await  startGeofencing(combineLocation, "Combine", 50, "GEOFENCE_TASK_HeadingToCombine")
+              try {
+                    await API.graphql(graphqlOperation(updateVehicle, {
+                        input: {
+                            userID: driverID, 
+                            HeadingToCombine: true, 
+                        }
+                        }))     
+                    } catch (error) {
+                        console.log("Direction Update lykkes ikke ", error)
+                        Alert.alert("Something went wrong when updating direction",
+                        " ! " + error + " ! ",
+                        [
+                            {
+                                text: "Ok",
+                                style: "cancel"
+                            }, 
+                        ]
+                        )
+                    }
+              setReadyToChangeDirection(false)
+              dispatch(setByFarm(false))
+              console.log("Du er igen udenfor regionen og har ændret retning mod combine")
+            }
+            console.log("Du er udenfor regionen")
+        }
+        else {
+            console.log("det virker måske ? ", region)
+        }
+      }
+    );
+
+    TaskManager.defineTask(
+      "GEOFENCE_TASK_HeadingToCombine",
+      async ({ data: { eventType, region }, error }) => {
+        console.log("hej")
+        if (error) {
+          console.log(error.message)
+          return;
+        } else if (eventType === LocationGeofencingEventType.Enter) {
+            setReadyToChangeDirection(true)
+            var sec = parseInt(Date.now()/1000)
+            var time = new Date().toLocaleTimeString()
+            var obj = {
+              sec: sec,
+              time: time,
+              byFarm: false,
+              byCombine: true
+            }
+            setEntryArray(oldArray => [...oldArray, obj])
+            console.log("du er i regionen")
+        }  else if (eventType === LocationGeofencingEventType.Exit) {
+          if(readyToChangeDirection)
+          {
+            var sec = parseInt(Date.now()/1000)
+            var time = new Date().toLocaleTimeString()
+            var obj = {
+              sec: sec,
+              time: time
+            }
+            setExitArray(oldArray => [...oldArray, obj])
+            await stopGeofencing("GEOFENCE_TASK_HeadingToCombine")
+            await startGeofencing(geofenceCord, geofenceName, geofenceRadius, "GEOFENCE_TASK_HeadingToFarm")
+            dispatch(setTravellingToCombine(false))
+            try {
+              await API.graphql(graphqlOperation(updateVehicle, {
+                  input: {
+                      userID: driverID, 
+                      HeadingToCombine: false, 
+                  }
+                  }))     
+              } catch (error) {
+                  console.log("Direction Update lykkes ikke ", error)
+                  Alert.alert("Something went wrong when updating direction",
+                  " ! " + error + " ! ",
+                  [
+                      {
+                          text: "Ok",
+                          style: "cancel"
+                      }, 
+                  ]
+                  )
+              }
+            setReadyToChangeDirection(false)
+            dispatch(setByCombine(false))
+            console.log("Du er igen udenfor regionen og har ændret retning mod farmen")
+          }
+            console.log("Du er udenfor regionen")
         }
         else {
           console.log("det virker måske ? ", region)
         }
       }
     );
-    
+    /*
     useEffect(() => {
       const subscription = AppState.addEventListener("change", nextAppState => {
         if (
@@ -80,7 +209,7 @@ const AuthScreen = props => {
         subscription.remove();
       };
     }, []);
-
+    */
     const fetchUserInfo = async() => {
 
       const userInfo = await Auth.currentAuthenticatedUser()
@@ -208,8 +337,10 @@ const AuthScreen = props => {
 
     return (
         <View style={Styles.container}>
-            <AntDesign onPress={() => signOut()} name="logout" size={screenWidth > 400 ? 52 : 42} color={Colors.summerWhite} style={{position: "absolute", top: 50, left: 50}}/>
-            {locationTrackerOn ? <LocationTracker /> : null}
+            <View style={{flexDirection: screenWidth > 400 ? "column" : "row", position: "absolute", top: screenWidth > 400 ? 100 : 50, left: 50, width: screenWidth > 400 ? "15%" : "35%", justifyContent: "space-between", height: screenWidth > 400 ? "15%" : "10%"}}>
+              <AntDesign onPress={() => signOut()} name="logout" size={screenWidth > 400 ? 52 : 42} color={Colors.summerWhite} style={{}}/>
+              <FontAwesome5 onPress={() => props.navigation.navigate("Records")} name="map-marked-alt" size={screenWidth > 400 ? 52 : 42} color={Colors.summerWhite} style={{}}/>
+            </View>
             <View style={Styles.inputBoxContainer}>
                 <View style={Styles.headerTextBox}>
                   <TouchableOpacity onPress={() => {}}>
@@ -228,12 +359,15 @@ const AuthScreen = props => {
                       data={createdOperationsArray}
                       keyExtractor={(item) => item.id}
                       renderItem={({item, index}) => (
+                        <TouchableOpacity onPress={() => console.log(item.id)}>
                         <OperationCard 
                           navigation={props.navigation}
                           OperationName={item.OperationName}
                           Participants={item.Participants}
+                          operationId={item.id}
                           setLocationTrackerOn={setLocationTrackerOn}
                         />
+                        </TouchableOpacity>
                     )}
                     /> 
                   
@@ -247,13 +381,15 @@ const AuthScreen = props => {
                       data={invitedOperationsArray}
                       keyExtractor={(item) => item.id}
                       renderItem={({item, index}) => (
+                        <TouchableOpacity onPress={() => console.log(item)}>
                         <OperationCard 
                           setLocationTrackerOn={setLocationTrackerOn}
                           navigation={props.navigation}
-                          key={item.id}
+                          operationId={item.id}
                           OperationName={item.OperationName}
                           Participants={item.Participants}
                         />
+                        </TouchableOpacity>
                     )}
                     /> 
                   
@@ -271,8 +407,9 @@ const Styles = StyleSheet.create ({
         backgroundColor: Colors.summerYellow
     },
     inputBoxContainer: {
-        width: screenWidth > 400 ? "70%" : "85%",
-        height: "90%",
+        marginTop: screenWidth > 400 ? 0 : 45,
+        width: screenWidth > 400 ? "70%" : "80%",
+        height: screenWidth > 400 ? "90%" : "80%",
         backgroundColor: Colors.summerDarkOrange,
         alignItems: "center",
         borderRadius: screenWidth * 0.10,
@@ -294,7 +431,7 @@ const Styles = StyleSheet.create ({
       justifyContent: "space-between"
     },
     headerText: {
-      fontSize: screenWidth > 400 ? 38 : 30,
+      fontSize: screenWidth > 400 ? 38 : 22,
       color: Colors.summerWhite,
       fontWeight: "600"
     },
@@ -319,7 +456,7 @@ const Styles = StyleSheet.create ({
       justifyContent: "center"
     },
     operationHeaderText: {
-      fontSize: screenWidth > 400 ? 30 : 22,
+      fontSize: screenWidth > 400 ? 30 : 14,
       fontWeight: "600",
       marginLeft: 10
     },
@@ -340,8 +477,8 @@ const Styles = StyleSheet.create ({
         color: Colors.summerWhite
     },
     iconContainer: {
-      height: screenWidth > 400 ? screenWidth * 0.08 : screenWidth * 0.15, 
-      width: screenWidth > 400 ? screenWidth * 0.08 : screenWidth * 0.15, 
+      height: screenWidth > 400 ? screenWidth * 0.08 : screenWidth * 0.135, 
+      width: screenWidth > 400 ? screenWidth * 0.08 : screenWidth * 0.135, 
       backgroundColor: Colors.summerWhite, 
       borderRadius: screenHeight * 0.035, 
       justifyContent: "center", 

@@ -39,7 +39,7 @@ const CreateOperation2 = props => {
             }
     }
 
-    const SaveOperation = async(operationArray, operationName, driverID) => {
+const SaveOperation = async(operationArray, operationName, driverID) => {
         setSaving(true)
         const jsonString = JSON.stringify(Object.assign({}, operationArray))
 
@@ -211,7 +211,7 @@ const CreateOperation2 = props => {
             saving ?
                 <ActivityIndicator style={{marginRight: 20}} size={"small"} color={Colors.summerDarkOrange}/> :
                 <TouchableOpacity onPress={() => {SaveOperation(operationArray, operationName, driverID)}}>
-                    <Ionicons style={{marginRight: 20}} name="ios-save" size={screenWidth > 400 ? 48 : 42} color={Colors.summerDarkOrange} />
+                    <Ionicons style={{marginRight: 20}} name="ios-save" size={screenWidth > 400 ? 48 : 32} color={Colors.summerDarkOrange} />
                 </TouchableOpacity>  
                     
         })

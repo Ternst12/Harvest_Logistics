@@ -3,10 +3,13 @@
   "serviceConfiguration": {
     "apiName": "harvestlogistics",
     "serviceName": "AppSync",
-    "gqlSchemaPath": "/Users/timmernst/Desktop/React-Native/Harverts_Logistics/Mobile/Harvest_Logistics/amplify/backend/api/harvestlogistics/schema.graphql",
     "defaultAuthType": {
       "mode": "API_KEY",
-      "expirationTime": 7
-    }
+      "expirationTime": 365,
+      "apiKeyExpirationDate": "2023-09-01T13:46:44.529Z",
+      "keyDescription": "API_KEY"
+    },
+    "conflictResolution": {},
+    "additionalAuthTypes": []
   }
 }

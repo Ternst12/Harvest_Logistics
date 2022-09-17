@@ -4,9 +4,6 @@ import { setTractorSpeed } from "../redux/Slices";
 
 const CarouselCardItem = ({item, index}) => {
 
-    const dispatch = useDispatch();
-
-
     return(
         <View>
             <TouchableOpacity onLongPress={() => {console.log(item.speed); dispatch(setTractorSpeed(item.speed))}} >

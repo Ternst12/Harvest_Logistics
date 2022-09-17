@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
-import { View, StyleSheet, Text, TouchableOpacity, Image, Alert} from "react-native";
-import MapView, {PROVIDER_GOOGLE, Marker, Circle} from 'react-native-maps';
+import { View, StyleSheet, Text, TouchableOpacity, Image, Alert, TouchableWithoutFeedback} from "react-native";
+import MapView, {PROVIDER_GOOGLE, Marker, Circle, Polyline} from 'react-native-maps';
 import { useSelector, useDispatch } from "react-redux";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Directions } from "../components/Directions";
-import { selectOrigin, selectDriverInformation, selectDriverID, selectGeofenceActive, selectIsStopWatchStart, selectGeofenceName, selectGeofenceRadius, selectResetStopWatch, selectGeofenceCord, setGeofenceCord, selectDriverName, selectParticipants, selectDistanceArray} from "../redux/Slices";
+import {  selectTravlingToCombine, selectOrigin, selectDriverInformation, selectDriverID, selectGeofenceActive, selectIsStopWatchStart, selectGeofenceName, selectGeofenceRadius, selectResetStopWatch, selectGeofenceCord, setGeofenceCord, selectDriverName, selectParticipants, selectDistanceArray, selectTractorSpeed, selectCombineId, setTravellingToCombine, setCombineLocation, selectCombineLocation, selectCurrentTaskName, selectEntryGeofence, selectExitGeofence} from "../redux/Slices";
 import Messagebox from "../components/Messagebox";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
 import { openMaps } from "../helperFunc/openMaps";
@@ -18,6 +17,9 @@ import { geofenceCheck, startGeofencing, stopGeofencing } from "../helperFunc/Ge
 import LottieView from 'lottie-react-native';
 import { distanceMeasurement } from "../helperFunc/findPlace";
 import { Feather } from '@expo/vector-icons';
+import { Octicons } from '@expo/vector-icons';
+import { updateVehicle } from "../graphql/mutations";
+import LocationButton from "../components/AddLocationButton";
 
 const MapScreen = (props) => {
 
@@ -28,9 +30,15 @@ const MapScreen = (props) => {
     const geofenceCord = useSelector(selectGeofenceCord)
     const geofenceName = useSelector(selectGeofenceName)
     const geofenceRadius = useSelector(selectGeofenceRadius)
-    const driverName = useSelector(selectDriverName)
+    const tractorSpeed = useSelector(selectTractorSpeed)
     const participants = useSelector(selectParticipants)
     const distanceArray = useSelector(selectDistanceArray)
+    const combineId = useSelector(selectCombineId)
+    const travellingToCombine = useSelector(selectTravlingToCombine)
+    const combineLocation = useSelector(selectCombineLocation)
+    const currentTaskName = useSelector(selectCurrentTaskName)
+    const entryArray = useSelector(selectEntryGeofence)
+    const exitArray = useSelector(selectExitGeofence)
 
     const tractorIcon = require("../images/logistics_tractor.png")
     const combineIcon = require("../images/logistics_combine_transparent.png")
@@ -39,6 +47,7 @@ const MapScreen = (props) => {
     const [selectedVehicleID, setSelectedVehicleID] = useState(null)
     const [distance, setDistance] = useState("")
     const [duration, setDuration] = useState(0)
+    const [meter, setMeter] = useState(0)
     const [directionInfoArray, setDirectionInfoArray] = useState([])
     const [showMessagebox, setShowMessagebox] = useState(false)
     const [fillLevel, setFillLevel] = useState(0)
@@ -49,24 +58,80 @@ const MapScreen = (props) => {
     const [loadedVehicles, setLoadedVehicles] = useState(false)
     const [fetchInterval, setFetchInterval] = useState(null)
     const [mapHeight, setMapHeight] = useState("100%")
-    const [combineInfo, setCombineInfo] = useState(null)
+    const [iconOpacity, setIconOpacity] = useState(0.4)
+    const [directionPoly, setDirectionPoly] = useState([{longitude: 10.145153, latitude: 56.501941}, {longitude: 10.145163, latitude: 56.501951}, {longitude: 10.145173, latitude: 56.501961}, {longitude: 10.145183, latitude: 56.501971}])
 
     const [vehicle, setVehicle] = useState([])
 
     const mapRef = useRef(null)
     const circleRef = useRef(null)
+    const circleRefCombine = useRef(null)
     const dispatch = useDispatch()
 
-    const testAsync = async (testArray) => {
-      
-        var newArray = testArray
+    useEffect(() => {
+        console.log("entry = ", entryArray)
+        console.log("exit = ", exitArray)
+    }, [entryArray, exitArray])
 
+    const ChangeDirection = async() => {
+        dispatch(setTravellingToCombine(!travellingToCombine))
+        try {
+            const result = await API.graphql(graphqlOperation(updateVehicle, {
+                    input: {
+                        userID: driverID, 
+                        HeadingToCombine: !travellingToCombine, 
+                    }
+                    }))   
+                if(result.data.updateVehicle && geofenceActive) {
+                    await stopGeofencing(currentTaskName)
+                    var task = !travellingToCombine ? "GEOFENCE_TASK_HeadingToCombine" : "GEOFENCE_TASK_HeadingToFarm";
+                    startGeofencing(
+                        task ==  "GEOFENCE_TASK_HeadingToFarm" ? geofenceCord : combineLocation, 
+                        task ==  "GEOFENCE_TASK_HeadingToFarm" ? geofenceName : "Home", 
+                        task ==  "GEOFENCE_TASK_HeadingToFarm" ? geofenceRadius : 50, 
+                        task)
+                }     
+                } catch (error) {
+                    console.log("Direction Update lykkes ikke ", error)
+                    Alert.alert("Something went wrong when updating direction",
+                    " ! " + error + " ! ",
+                    [
+                        {
+                            text: "Ok",
+                            style: "cancel"
+                        }, 
+                    ]
+                    )
+                }
+    }
+
+    const TractorCall = async() => {
+        try{
+            const combineInfoPlaceHolder = await API.graphql(graphqlOperation(getVehicle, {userID: combineId}))
+            const coordinates = {
+                lng: combineInfoPlaceHolder.data.getVehicle.longitude,
+                lat: combineInfoPlaceHolder.data.getVehicle.latitude
+            }
+            dispatch(setCombineLocation(coordinates))
+            const result = await distanceMeasurement(origin, coordinates, tractorSpeed, setDirectionPoly)
+            setDistance(result.text)
+            setDuration(result.time)
+            setMeter(result.value)
+            setFillLevel(combineInfoPlaceHolder.data.getVehicle.fillLevel)
+        } catch (e) {
+            console.log("problemer med combineInfoPlaceHolder = ", e)
+        }
+    }
+
+    const CombineCall = async (testArray) => {
+        var newArray = testArray
         const result2 = await Promise.all(vehicle.map(async(v) => { 
                const coordinates = {
                    lng: v.longitude,
                    lat: v.latitude
                }
-               const result = await distanceMeasurement(origin, coordinates, 30)
+               const HeadingToCombine = v.HeadingToCombine
+               const result = await distanceMeasurement(origin, coordinates, tractorSpeed, setDirectionPoly)
               
                const index_of = newArray.findIndex(object => {
                 return object.id == v.userID;
@@ -75,37 +140,22 @@ const MapScreen = (props) => {
                 const userVehicle = newArray[index_of].vehicle
                 const userId = newArray[index_of].id
                 newArray.splice(index_of, 1, {
-                    distance: result.value,
+                    distance: result.text,
                     duration: result.time,
                     meters: result.value,
                     vehicle: userVehicle,
                     id: userId,
-                    name: userName
+                    name: userName,
+                    HeadingToCombine: HeadingToCombine
                 })
                 
             }))
-            
             setDirectionInfoArray(newArray)
             return;
          }
 
 
-    const fetchVehicles = async() => {
-        geofenceCheck(setGeofenceCheckColor)
-        if(driverInformation == "tractor") {
-            const combineId = await participants.find((item) => {return item.vehicle == "combine"})
-            const combineInfoPlaceHolder = await API.graphql(graphqlOperation(getVehicle, {userID: combineId.id}))
-            setCombineInfo(combineInfoPlaceHolder.data.getVehicle)
-            const coordinates = {
-                lng: combineInfoPlaceHolder.data.getVehicle.longitude,
-                lat: combineInfoPlaceHolder.data.getVehicle.latitude
-            }
-            const result = await distanceMeasurement(origin, coordinates, 30)
-            console.log("distance to combine = ", result.value)
-            setDistance(result.value)
-            setDuration(result.time)
-            setFillLevel(combineInfoPlaceHolder.data.getVehicle.fillLevel)
-        }
+    const fetchVehicles = async(origin) => {
         var vehicileArray = []
         const resultVehicle = await Promise.all(participants.map(async(p) => {
             try {
@@ -148,7 +198,7 @@ const MapScreen = (props) => {
             }
         } else {
       
-               setChoosenMarkerTitle(combineInfo.userID)           
+               setChoosenMarkerTitle(combineId)           
         }
 
     }
@@ -160,16 +210,16 @@ const MapScreen = (props) => {
            
                 <View style={{flexDirection: "row"}}>
                 {!radar ?
-                    <TouchableOpacity onPress={() =>{const interval = setInterval(() => {fetchVehicles();}, 1500); setFetchInterval(interval); setRadar(true); setOperationStarted(true)}}>
+                    <TouchableOpacity onPress={() =>{const interval = setInterval(() => {fetchVehicles(origin);}, 2000); setFetchInterval(interval); setRadar(true); setOperationStarted(true)}}>
                         <Text style={{fontSize: screenWidth > 400 ? 22 : 20, marginRight: 20, color: geofenceCheckColor ? "blue" : "white"}}>Find</Text>
                     </TouchableOpacity> 
                     :
-                    <View style={{flexDirection: "row", width: "50%", alignItems: "center", justifyContent: "space-between"}}>
-                        <TouchableOpacity onPress={() => zoomOut()}>
-                            <Feather name="zoom-in" size={40} color={geofenceCheckColor ? Colors.androidGreen : Colors.summerWhite} />
+                    <View style={{flexDirection: "row", width: screenWidth > 400 ? "50%" : "70%", alignItems: "center", justifyContent: "space-between"}}>
+                        <TouchableOpacity onPress={() => {zoomOut(); console.log(entryArray), console.log(exitArray) }}>
+                            <Feather name="zoom-in" size={screenWidth > 400 ? 40 : 30} color={geofenceCheckColor ? Colors.androidGreen : Colors.summerWhite} />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => {clearInterval(fetchInterval)}}>
-                            <LottieView style={{width: 40, height: 40, marginRight: 20}} autoPlay={true} loop={true} source={require("../lottie/radar.json")}/>
+                            <LottieView style={{width: screenWidth > 400 ? 40 : 30, height: screenWidth > 400 ? 40 : 30, marginRight: 20}} autoPlay={true} loop={true} source={require("../lottie/radar.json")}/>
                         </TouchableOpacity>
                     </View>
                 }
@@ -184,9 +234,16 @@ const MapScreen = (props) => {
     }, [])
 
     useEffect(() => {
-        if(operationStarted) {
-        var testArray = [...directionInfoArray]
-        testAsync(testArray)
+        if(operationStarted && driverInformation == "combine") 
+        {
+            var testArray = [...directionInfoArray]
+            geofenceCheck(setGeofenceCheckColor, "GEOFENCE_TASK_HeadingToCombine")
+            CombineCall(testArray)
+        } 
+        else if(operationStarted && driverInformation == "tractor") 
+        {
+            geofenceCheck(setGeofenceCheckColor, "GEOFENCE_TASK_HeadingToCombine")
+            TractorCall()
         }
     }, [vehicle])
     
@@ -208,14 +265,35 @@ const MapScreen = (props) => {
         }}
         >
 
+        <Polyline 
+                coordinates={directionPoly}
+                strokeColor={Colors.reactNativeBlue}
+                strokeWidth={3}
+        />
+
         <Marker
-        title="origin"
-        identifier="origin"
-        coordinate={{latitude: origin ? origin.lat : 67.026427, longitude: origin ? origin.lng :  19.985735}}
-        opacity={0}
+            title="origin"
+            identifier="origin"
+            coordinate={{latitude: origin ? origin.lat : 67.026427, longitude: origin ? origin.lng :  19.985735}}
+            opacity={0}
         >
 
         </Marker>
+
+        {geofenceActive && combineLocation && driverInformation == "tractor" ?
+        <Circle 
+         ref={circleRefCombine}
+         onLayout={() => (circleRefCombine.current.setNativeProps({
+           strokeColor: 'rgba(6, 147, 243, 0.8)',
+           fillColor: 'rgba(6, 147, 243, 0.8)',
+         }))}
+        center={{latitude: combineLocation.lat, longitude: combineLocation.lng}} 
+        radius={50}
+        fillColor={'rgba(6, 147, 243, 0.8)'}
+        strokeColor={'rgba(6, 147, 243, 0.8)'}
+        />
+        : null
+        }
 
         {geofenceActive ?
         <Circle 
@@ -235,7 +313,7 @@ const MapScreen = (props) => {
         <Marker 
         draggable={true}
         onDragStart={() => {
-            stopGeofencing()
+            stopGeofencing(currentTaskName)
             geofenceCheck(setGeofenceCheckColor)
         }}
         onDragEnd={(e) => {
@@ -249,8 +327,13 @@ const MapScreen = (props) => {
                 lat: e.nativeEvent.coordinate.latitude,
                 lng: e.nativeEvent.coordinate.longitude
             }
-            startGeofencing(PlaceHolder, geofenceName, geofenceRadius)
-            geofenceCheck(setGeofenceCheckColor)
+            var task = travellingToCombine ? "GEOFENCE_TASK_HeadingToCombine" : "GEOFENCE_TASK_HeadingToFarm";
+            startGeofencing(
+                task ==  "GEOFENCE_TASK_HeadingToFarm" ? PlaceHolder : combineLocation, 
+                task ==  "GEOFENCE_TASK_HeadingToFarm" ? geofenceName : "Home", 
+                task ==  "GEOFENCE_TASK_HeadingToFarm" ? geofenceRadius : 50, 
+                task)
+            geofenceCheck(setGeofenceCheckColor, task)
         }}
         coordinate={{
             latitude: geofenceCord.lat, 
@@ -267,18 +350,29 @@ const MapScreen = (props) => {
                
                 return(
                         <Marker
-                        key={vehicle.id}
-                        coordinate={{latitude: vehicle.latitude, longitude: vehicle.longitude}}
-                        
-                        title={vehicle.userID}
-                        identifier={vehicle.userID}
+                            key={vehicle.id}
+                            coordinate={{latitude: vehicle.latitude, longitude: vehicle.longitude}}
+                            title={vehicle.userID}
+                            identifier={vehicle.userID}
+                            anchor={{ x: 0.5, y: 0.5 }}
                         >
-                            <Image style={styles.vehicleIcon} source={driverInformation == "combine" ? tractorIcon : vehicle.userID == combineInfo.userID ? combineIcon : tractorIcon}/>          
+                            <Image style={styles.vehicleIcon} source={driverInformation == "combine" ? tractorIcon : vehicle.userID == combineId ? combineIcon : tractorIcon}/>          
                         </Marker>
                 )
             })
             : null}
+            
+      
         </MapView>
+        <TouchableWithoutFeedback 
+            onPress={() => ChangeDirection()} onPressOut={() => {setIconOpacity(0.4)}} onPressIn={() => {setIconOpacity(1)}}>
+                <View style={[styles.mapIcon, {opacity: iconOpacity, top: mapHeight, marginTop: - screenHeight * 0.10}]} >
+                    <Octicons name="arrow-switch" size={screenWidth > 400 ? 60 : 40} color={travellingToCombine ? Colors.androidGreen : Colors.reactNativeBlue} />
+                </View>
+        </TouchableWithoutFeedback>
+        <View style={{position: "absolute", right: 200, top: mapHeight, marginTop: - screenHeight * 0.10}}>
+            <LocationButton />
+        </View>
     
         {showMessagebox ? 
             <View style={{position: "absolute", top: "40%", left: screenWidth > 400 ? "25%" : "15%"}}>
@@ -312,15 +406,13 @@ const MapScreen = (props) => {
         null
         }
         {operationStarted ?
-        <InformationWhitebox driverInformation={driverInformation} directionInfoArray={directionInfoArray} setMapHeight={setMapHeight} distance={distance} duration={duration} fillLevel={fillLevel}/>
+        <InformationWhitebox travellingToCombine={travellingToCombine} driverInformation={driverInformation} directionInfoArray={directionInfoArray} setMapHeight={setMapHeight} distance={distance} duration={duration} meters={meter} fillLevel={fillLevel}/>
         :
         null
         }
-        {operationStarted ?
+        
         <StopButton setOperationStarted={setOperationStarted} driverID={driverID} interval={fetchInterval} navigation={props.navigation}/>
-        : 
-        null
-        }
+        
     </View>
   );
 };
@@ -369,8 +461,14 @@ const styles = StyleSheet.create({
     },
     mapIcon: {
         position: "absolute",
-        bottom: 30,
-        right: 30
+        bottom: screenHeight * 0.06,
+        right: 30,
+        width: screenWidth > 400 ? screenWidth * 0.095 : screenWidth * 0.15,
+        height: screenWidth > 400 ? screenWidth * 0.095 : screenWidth * 0.15,
+        borderRadius: screenWidth > 400 ? screenWidth * 0.045 : screenWidth * 0.085, 
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: Colors.summerWhite
     },
     fillLevelSlider: {
         position: "absolute",

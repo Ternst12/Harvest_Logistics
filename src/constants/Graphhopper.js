@@ -1,0 +1,1 @@
+export const Graphhopper_APIKEY = "12d3fb50-069a-4cfc-927c-ac97beb6de0b"

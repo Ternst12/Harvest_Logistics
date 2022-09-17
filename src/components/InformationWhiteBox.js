@@ -1,12 +1,15 @@
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useEffect, useState } from "react";
 import Colors from "../constants/Colors";
 import { screenWidth, screenHeight } from "../constants/Dimensions";
+import { Organizations } from "aws-sdk";
+
 
 
 const InformationWhitebox = props => {
 
     const [boxHeight, setBoxHeight] = useState("30%")
+    const [distanceText, setDistanceText] = useState(true)
 
     var newDurationText = ""
 
@@ -58,37 +61,41 @@ const InformationWhitebox = props => {
             {props.driverInformation != "combine" ?
                     <View style={styles.infoBox}>                   
                         <View style={styles.infoLeftAndMiddle}>
-                            <Text style={styles.text_CombineInfo}>{newDurationText}</Text>
-                        </View>          
-                        {props.distance == "" ?
-                        <ActivityIndicator size={"small"} color={Colors.reactNativeBlue}/> :
-                        <View style={styles.infoLeftAndMiddle}>
-                            <Text style={styles.text_CombineInfo}>{props.distance}</Text>
+                            <Text style={[styles.text_CombineInfo, {color: props.travellingToCombine ? Colors.androidGreen : Colors.reactNativeBlue}]}>{newDurationText}</Text>
+                        </View>  
+                        <View style={styles.infoLeftAndMiddle}>        
+                            {props.distance == "" ?
+                            <ActivityIndicator size={"small"} color={Colors.reactNativeBlue}/> :
+                            <TouchableOpacity onPress={() => setDistanceText(!distanceText)}>
+                                    <Text style={[styles.text, {color: props.travellingToCombine ? Colors.androidGreen : Colors.reactNativeBlue}]}>{distanceText ? props.distance : props.meters}</Text> 
+                            </TouchableOpacity>
+                            }
                         </View>
-                        }
                         <View style={styles.infoRight}>
-                            <Text style={styles.text_CombineInfo}>{props.fillLevel}%</Text>
+                            <Text style={[styles.text, {color: props.travellingToCombine ? Colors.androidGreen : Colors.reactNativeBlue}]}>{props.fillLevel}%</Text>
                         </View> 
                     </View>
                     :
                     <View style={styles.infoBox_Combine}>
                         {props.directionInfoArray.map((item) => 
                         {
-                            if(item.duration != 0 && item.duration != undefined) {
+                            if(item.duration != 0) {
                              newDurationText = item.duration.split("\n")
                             }
 
                             return (
                                 <View style={{flexDirection: "row", height: screenWidth > 400 ? screenHeight * 0.048 : screenHeight * 0.04}}>
                                     <View style={styles.infoLeftAndMiddle}>
-                                        <Text style={styles.text}>{item.name}</Text>
+                                        <Text style={[styles.text, {color: item.HeadingToCombine ? Colors.androidGreen : Colors.reactNativeBlue}]}>{item.name}</Text>
                                     </View>
                                     
                                     <View style={styles.infoLeftAndMiddle}>
-                                         {item.distance == 0 ?
+                                         {item.distance == "" ?
                                         <ActivityIndicator size={"small"} color={Colors.reactNativeBlue}/> 
                                         :
-                                        <Text style={styles.text}>{item.distance}</Text> 
+                                        <TouchableOpacity onPress={() =>{ setDistanceText(!distanceText); console.log(item)} }>
+                                            <Text style={[styles.text, {color: item.HeadingToCombine ? Colors.androidGreen : Colors.reactNativeBlue}]}>{distanceText ? item.distance : item.meters}</Text> 
+                                        </TouchableOpacity>
                                         }
                                     </View>
                                     
@@ -96,7 +103,7 @@ const InformationWhitebox = props => {
                                          {newDurationText == "" ?
                                         <ActivityIndicator size={"small"} color={Colors.reactNativeBlue}/> 
                                         :
-                                        <Text style={styles.text}>{newDurationText}</Text> 
+                                        <Text style={[styles.text, {color: item.HeadingToCombine ? Colors.androidGreen : Colors.reactNativeBlue}]}>{newDurationText}</Text> 
                                         }
                                     </View>
                                 </View>

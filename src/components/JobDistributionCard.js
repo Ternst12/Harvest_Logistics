@@ -40,7 +40,7 @@ const JobDistributionCard = props => {
                 <View style={{position: "absolute", left: 50}}>
                     <Text style={styles.userNameText}>{props.userName}</Text>
                 </View>
-                <View style={{flexDirection: "row", width: "30%", justifyContent: "space-between", position: "absolute", right: 50}}>
+                <View style={{flexDirection: "row", width: "35%", justifyContent: "space-between", position: "absolute", right: 20}}>
                     <TouchableOpacity a onPress={() => {
                         setTractorSelected(!tractorSelected)
                         if(combineSelected) {
@@ -76,13 +76,14 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.reactNativeGrey        
     },
     userNameText: {
-        fontSize: screenWidth > 400 ? 30 : 22,
+        fontSize: screenWidth > 400 ? 30 : 18,
         fontWeight: "900",
         color: Colors.summerWhite
     },
     userImage: {
-        height: screenHeight * 0.08,
-        width: screenHeight * 0.08,
+
+        height: screenWidth > 400 ? screenHeight * 0.08 : screenHeight * 0.06,
+        width: screenWidth > 400 ? screenHeight * 0.08 : screenHeight * 0.06,
     }
     
 })

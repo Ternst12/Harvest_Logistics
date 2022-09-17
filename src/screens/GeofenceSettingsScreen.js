@@ -145,8 +145,7 @@ const GeofenceSettingsScreen = props => {
             <TouchableOpacity style={styles.saveButton} onPress={() => {
                 dispatch(setGeofenceCord(markerCord))
                 dispatch(setGeofenceName(markerName))
-                dispatch(setGeofenceRadius(radius[0]))
-                console.log("radius = ", radius[0])
+                dispatch(setGeofenceRadius(radius[0] == undefined ? 100 : radius[0]))
                 setActivityIndicator(true)
                 setTimeout(() => {
                     props.navigation.navigate("HomeMap");

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {selectDriverID} from "../redux/Slices";
+import {selectDriverID, setCombineId, setOperationId, setTravellingToCombine} from "../redux/Slices";
 import { setDriverInformation, setParticipants, setDistanceArray } from "../redux/Slices";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert} from "react-native";
 import Colors from "../constants/Colors";
@@ -9,6 +9,7 @@ import Modal from "react-native-modal";
 import LottieView from 'lottie-react-native';
 import { API, graphqlOperation} from "aws-amplify";
 import { updateVehicle } from "../graphql/mutations";
+import { requestPermissions } from "../helperFunc/locationTracker";
 
 const OperationCard = props => {
 
@@ -38,7 +39,8 @@ const OperationCard = props => {
                 name: item.name,
                 duration: 0,
                 distance: 0,
-                meters: null
+                meters: null,
+                HeadingToCombine: true
             })
         }) 
 
@@ -47,7 +49,10 @@ const OperationCard = props => {
     }, [])
 
     const NavigateToMap = async() => {
+        await requestPermissions(dispatch, driverID)
         const userVehicleType = participants.filter((item) => item.id == driverID) 
+        const combineId = await participants.find((item) => {return item.vehicle == "combine"})
+        dispatch(setCombineId(combineId.id))
         if(userVehicleType[0].vehicle == "combine") {
             try {
                 await API.graphql(graphqlOperation(updateVehicle, {
@@ -57,7 +62,7 @@ const OperationCard = props => {
                        }
                        }))            
                    } catch (error) {
-                       console.log("Location Update lykkes ikke ", error)
+                       console.log("Filllevel Update lykkes ikke ", error)
                        Alert.alert("Something went wrong when updating fillLevel",
                        " ! " + error + " ! ",
                        [
@@ -71,7 +76,29 @@ const OperationCard = props => {
         }
         dispatch(setDriverInformation(userVehicleType[0].vehicle)) 
         dispatch(setParticipants(filteredParticipants)) 
-        dispatch(setDistanceArray(distanceArrayPlaceholder))  
+        dispatch(setDistanceArray(distanceArrayPlaceholder))
+        dispatch(setTravellingToCombine(true))
+        dispatch(setOperationId(props.operationId))  
+        try {
+           const result = await API.graphql(graphqlOperation(updateVehicle, {
+                   input: {
+                       userID: driverID, 
+                       HeadingToCombine: true, 
+                   }
+                   }))   
+                // console.log("result = ", result)         
+               } catch (error) {
+                   console.log("Location Update lykkes ikke ", error)
+                   Alert.alert("Something went wrong when updating direction",
+                   " ! " + error + " ! ",
+                   [
+                       {
+                           text: "Ok",
+                           style: "cancel"
+                       }, 
+                   ]
+                   )
+               }
         setLottiePlay(1); 
         props.setLocationTrackerOn(true)
         setTimeout(() => {
@@ -79,12 +106,12 @@ const OperationCard = props => {
             console.log("placeholderArray = ", distanceArrayPlaceholder)
             props.navigation.navigate("Home", {
             screen: "HomeMap"
-        })}, 2000)
+        })}, 3000)
     }
 
 
  return(
-        <View key={props.key} style={{width: "100%", alignItems: "center"}}>
+        <View key={props.id} style={{width: "100%", alignItems: "center"}}>
             <View style={styles.container}>
                 <Text style={styles.OperationName}>{props.OperationName != "" ? props.OperationName : "Not named"}</Text>
                 <TouchableOpacity onPress={() => setModalVisible(true)} style={{flexDirection: "row", marginLeft: 40, position: "absolute", bottom: 0, marginBottom: 10}}>
@@ -103,15 +130,15 @@ const OperationCard = props => {
                 </TouchableOpacity>
             </View>
             <Modal isVisible={modalVisible} style={{alignItems: "center"}}>
-                <View style={[styles.modal, {height: participants.length > 4 ? participants.length > 6 ? screenHeight * 0.45 : screenHeight * 0.35 : screenHeight * 0.3}]}>
+                <View style={[styles.modal, {height: participants.length > 4 ? participants.length > 6 ? screenHeight * 0.65 : screenHeight * 0.55 : screenHeight * 0.5}]}>
                     <Text style={styles.modalHeader}>Participants detail</Text>
                     <View style={{marginTop: 20, width: "100%", alignItems: "center"}}>
                         {
                             participants.map((p) => {
                                 return(
                                     <View key={p.name} style={styles.participantContainer}>
-                                        <Text style={{marginRight: 20, fontSize: screenWidth > 400 ? 20 : 16, color: Colors.summerWhite}}>{p.name}</Text>
-                                        <Text style={{fontSize: screenWidth > 400 ? 20 : 16, color: Colors.summerWhite}}>drives a {p.vehicle}</Text>
+                                        <Text style={{marginRight: 20, fontSize: screenWidth > 400 ? 20 : 15, color: Colors.summerWhite}}>{p.name}</Text>
+                                        <Text style={{fontSize: screenWidth > 400 ? 20 : 15, color: Colors.summerWhite}}>drives a {p.vehicle}</Text>
                                     </View>
                                 )
                             })
@@ -142,7 +169,7 @@ const styles = StyleSheet.create({
         marginLeft: 40
     },
     modal: {
-        width: screenWidth * 0.4,
+        width: screenWidth > 400 ? screenWidth * 0.5 : screenWidth * 0.8,
         backgroundColor: Colors.summerWhite,
         alignItems: "center",
         borderRadius: 20,
@@ -156,7 +183,7 @@ const styles = StyleSheet.create({
     participantContainer: {
         flexDirection: "row", 
         marginVertical: 10, 
-        width: "80%", 
+        width: "85%", 
         backgroundColor: Colors.summerDarkOrange, 
         height:  screenWidth > 400 ? 40 : 32, 
         justifyContent: "center", 
@@ -180,7 +207,7 @@ const styles = StyleSheet.create({
     lottieContainer: {
         position: "absolute",
         right: 0,
-        width: "40%",
+        width: screenWidth > 400 ? "40%" : "25%",
         height: "100%",
         justifyContent: "center",
         alignItems: "center"

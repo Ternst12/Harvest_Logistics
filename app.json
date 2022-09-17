@@ -2,7 +2,7 @@
   "expo": {
     "name": "Harvest_Logistics",
     "slug": "Harvest_Logistics",
-    "version": "2.0.5",
+    "version": "3.0.2",
     "orientation": "portrait",
     "icon": "./src/images/logistics_combine.png",
     "splash": {

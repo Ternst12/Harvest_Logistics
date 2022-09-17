@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
         width: "90%"
     },
     infoText: {
-        fontSize: screenWidth > 400 ? 30 : 22,
+        fontSize: screenWidth > 400 ? 30 : 10.5,
         color: Colors.reactNativeGrey
     },
     continueButton: {

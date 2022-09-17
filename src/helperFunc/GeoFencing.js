@@ -2,8 +2,10 @@
 import * as Location from "expo-location"
 
 
-export const startGeofencing = async(geofenceCord, geofenceName, geofenceRadius) => {
+export const startGeofencing = async(geofenceCord, geofenceName, geofenceRadius, TaskName) => {
     console.log("Start Geofence = ", geofenceCord.lat)
+    console.log("Geofence Name = ", geofenceName)
+    console.log("TaskName = ", TaskName)
     let region = [{
         identifier: geofenceName,
         latitude: geofenceCord.lat,
@@ -14,15 +16,16 @@ export const startGeofencing = async(geofenceCord, geofenceName, geofenceRadius)
     }]
 
     try {
-    await Location.startGeofencingAsync("GEOFENCE_TASK", region)
+        await Location.startGeofencingAsync(TaskName, region)
+        
     } catch (e) {
         console.log("Something went wrong when trying to start geofence = ", e)
     }
 }
 
-export const geofenceCheck = async(setGeofenceCheckColor) => {
+export const geofenceCheck = async(setGeofenceCheckColor, TaskName) => {
     try{
-        const result = await Location.hasStartedGeofencingAsync("GEOFENCE_TASK")
+        const result = await Location.hasStartedGeofencingAsync(TaskName)
         
         setGeofenceCheckColor(result)
     } catch(e) {
@@ -30,10 +33,11 @@ export const geofenceCheck = async(setGeofenceCheckColor) => {
     }
 }
 
-export const stopGeofencing = async() => {
+export const stopGeofencing = async(TaskName) => {
     try{
-    console.log("Stopping geofence")
-    await Location.stopGeofencingAsync("GEOFENCE_TASK")
+        console.log("Stopping geofence")
+        const result = await Location.stopGeofencingAsync(TaskName)
+        return result
     } catch (e) {
         console.log("Something went wrong when trying to stop geofence = ", e)
     }

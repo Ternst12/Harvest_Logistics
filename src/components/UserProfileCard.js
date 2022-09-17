@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import Colors from "../constants/Colors";
-import { screenHeight } from "../constants/Dimensions";
+import { screenHeight, screenWidth } from "../constants/Dimensions";
 
 const UserProfileCard = props => {
 
@@ -40,9 +40,9 @@ const styles = StyleSheet.create({
         color: Colors.summerWhite
     },
     userImage: {
-        height: 100,
-        width: 100,
-        borderRadius: 50
+        height: screenWidth > 400 ? 100 : 70, 
+        width: screenWidth > 400 ? 100 : 70,
+        borderRadius: screenWidth > 400 ? 50 : 35
     }
     
 })

@@ -14,6 +14,8 @@ type User @model {
     
     operation_created: AWSJSON
     operation_invited: AWSJSON
+
+    travelingRecords: [Records] @hasMany(indexName: "byUser", fields: ["id"])
 }
 
 type Vehicle @model {
@@ -80,4 +82,14 @@ type Operation @model {
         CreatorId: ID!
         OperationName: String!,
         Participants: AWSJSON
+}
+
+type Records @model {
+    id: ID! @primaryKey
+    userId: ID! @index(name: "byUser")
+    operationId: ID!
+    operation: Operation @hasOne(fields: ["operationId"])
+    recordData: AWSJSON!
+    entryArray: AWSJSON
+    exitArray: AWSJSON
 }

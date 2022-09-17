@@ -34,6 +34,19 @@ export const getUser = /* GraphQL */ `
       isActive
       operation_created
       operation_invited
+      travelingRecords {
+        items {
+          id
+          userId
+          operationId
+          recordData
+          entryArray
+          exitArray
+          createdAt
+          updatedAt
+        }
+        nextToken
+      }
       createdAt
       updatedAt
     }
@@ -77,6 +90,9 @@ export const listUsers = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -170,6 +186,9 @@ export const getConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -204,6 +223,9 @@ export const getConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -291,6 +313,9 @@ export const getActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -325,6 +350,9 @@ export const getActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -441,6 +469,9 @@ export const getPlace = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -584,6 +615,65 @@ export const listOperations = /* GraphQL */ `
         CreatorId
         OperationName
         Participants
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getRecords = /* GraphQL */ `
+  query GetRecords($id: ID!) {
+    getRecords(id: $id) {
+      id
+      userId
+      operationId
+      operation {
+        id
+        CreatorId
+        OperationName
+        Participants
+        createdAt
+        updatedAt
+      }
+      recordData
+      entryArray
+      exitArray
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listRecords = /* GraphQL */ `
+  query ListRecords(
+    $id: ID
+    $filter: ModelRecordsFilterInput
+    $limit: Int
+    $nextToken: String
+    $sortDirection: ModelSortDirection
+  ) {
+    listRecords(
+      id: $id
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      sortDirection: $sortDirection
+    ) {
+      items {
+        id
+        userId
+        operationId
+        operation {
+          id
+          CreatorId
+          OperationName
+          Participants
+          createdAt
+          updatedAt
+        }
+        recordData
+        entryArray
+        exitArray
         createdAt
         updatedAt
       }

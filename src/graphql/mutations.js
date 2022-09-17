@@ -37,6 +37,19 @@ export const createUser = /* GraphQL */ `
       isActive
       operation_created
       operation_invited
+      travelingRecords {
+        items {
+          id
+          userId
+          operationId
+          recordData
+          entryArray
+          exitArray
+          createdAt
+          updatedAt
+        }
+        nextToken
+      }
       createdAt
       updatedAt
     }
@@ -78,6 +91,19 @@ export const updateUser = /* GraphQL */ `
       isActive
       operation_created
       operation_invited
+      travelingRecords {
+        items {
+          id
+          userId
+          operationId
+          recordData
+          entryArray
+          exitArray
+          createdAt
+          updatedAt
+        }
+        nextToken
+      }
       createdAt
       updatedAt
     }
@@ -119,6 +145,19 @@ export const deleteUser = /* GraphQL */ `
       isActive
       operation_created
       operation_invited
+      travelingRecords {
+        items {
+          id
+          userId
+          operationId
+          recordData
+          entryArray
+          exitArray
+          createdAt
+          updatedAt
+        }
+        nextToken
+      }
       createdAt
       updatedAt
     }
@@ -224,6 +263,9 @@ export const createConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -258,6 +300,9 @@ export const createConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -308,6 +353,9 @@ export const updateConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -342,6 +390,9 @@ export const updateConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -392,6 +443,9 @@ export const deleteConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -426,6 +480,9 @@ export const deleteConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -474,6 +531,9 @@ export const createActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -508,6 +568,9 @@ export const createActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -554,6 +617,9 @@ export const updateActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -588,6 +654,9 @@ export const updateActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -634,6 +703,9 @@ export const deleteActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -668,6 +740,9 @@ export const deleteActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -758,6 +833,9 @@ export const createPlace = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -807,6 +885,9 @@ export const updatePlace = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -856,6 +937,9 @@ export const deletePlace = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -998,6 +1082,81 @@ export const deleteOperation = /* GraphQL */ `
       CreatorId
       OperationName
       Participants
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const createRecords = /* GraphQL */ `
+  mutation CreateRecords(
+    $input: CreateRecordsInput!
+    $condition: ModelRecordsConditionInput
+  ) {
+    createRecords(input: $input, condition: $condition) {
+      id
+      userId
+      operationId
+      operation {
+        id
+        CreatorId
+        OperationName
+        Participants
+        createdAt
+        updatedAt
+      }
+      recordData
+      entryArray
+      exitArray
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const updateRecords = /* GraphQL */ `
+  mutation UpdateRecords(
+    $input: UpdateRecordsInput!
+    $condition: ModelRecordsConditionInput
+  ) {
+    updateRecords(input: $input, condition: $condition) {
+      id
+      userId
+      operationId
+      operation {
+        id
+        CreatorId
+        OperationName
+        Participants
+        createdAt
+        updatedAt
+      }
+      recordData
+      entryArray
+      exitArray
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const deleteRecords = /* GraphQL */ `
+  mutation DeleteRecords(
+    $input: DeleteRecordsInput!
+    $condition: ModelRecordsConditionInput
+  ) {
+    deleteRecords(input: $input, condition: $condition) {
+      id
+      userId
+      operationId
+      operation {
+        id
+        CreatorId
+        OperationName
+        Participants
+        createdAt
+        updatedAt
+      }
+      recordData
+      entryArray
+      exitArray
       createdAt
       updatedAt
     }

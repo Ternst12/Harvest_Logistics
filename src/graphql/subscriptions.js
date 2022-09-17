@@ -34,6 +34,19 @@ export const onCreateUser = /* GraphQL */ `
       isActive
       operation_created
       operation_invited
+      travelingRecords {
+        items {
+          id
+          userId
+          operationId
+          recordData
+          entryArray
+          exitArray
+          createdAt
+          updatedAt
+        }
+        nextToken
+      }
       createdAt
       updatedAt
     }
@@ -72,6 +85,19 @@ export const onUpdateUser = /* GraphQL */ `
       isActive
       operation_created
       operation_invited
+      travelingRecords {
+        items {
+          id
+          userId
+          operationId
+          recordData
+          entryArray
+          exitArray
+          createdAt
+          updatedAt
+        }
+        nextToken
+      }
       createdAt
       updatedAt
     }
@@ -110,6 +136,19 @@ export const onDeleteUser = /* GraphQL */ `
       isActive
       operation_created
       operation_invited
+      travelingRecords {
+        items {
+          id
+          userId
+          operationId
+          recordData
+          entryArray
+          exitArray
+          createdAt
+          updatedAt
+        }
+        nextToken
+      }
       createdAt
       updatedAt
     }
@@ -205,6 +244,9 @@ export const onCreateConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -239,6 +281,9 @@ export const onCreateConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -288,6 +333,9 @@ export const onUpdateConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -322,6 +370,9 @@ export const onUpdateConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -371,6 +422,9 @@ export const onDeleteConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -405,6 +459,9 @@ export const onDeleteConnection = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -452,6 +509,9 @@ export const onCreateActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -486,6 +546,9 @@ export const onCreateActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -531,6 +594,9 @@ export const onUpdateActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -565,6 +631,9 @@ export const onUpdateActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -610,6 +679,9 @@ export const onDeleteActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -644,6 +716,9 @@ export const onDeleteActivityOverview = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -722,6 +797,9 @@ export const onCreatePlace = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -768,6 +846,9 @@ export const onUpdatePlace = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -814,6 +895,9 @@ export const onDeletePlace = /* GraphQL */ `
         isActive
         operation_created
         operation_invited
+        travelingRecords {
+          nextToken
+        }
         createdAt
         updatedAt
       }
@@ -947,6 +1031,72 @@ export const onDeleteOperation = /* GraphQL */ `
       CreatorId
       OperationName
       Participants
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onCreateRecords = /* GraphQL */ `
+  subscription OnCreateRecords($filter: ModelSubscriptionRecordsFilterInput) {
+    onCreateRecords(filter: $filter) {
+      id
+      userId
+      operationId
+      operation {
+        id
+        CreatorId
+        OperationName
+        Participants
+        createdAt
+        updatedAt
+      }
+      recordData
+      entryArray
+      exitArray
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onUpdateRecords = /* GraphQL */ `
+  subscription OnUpdateRecords($filter: ModelSubscriptionRecordsFilterInput) {
+    onUpdateRecords(filter: $filter) {
+      id
+      userId
+      operationId
+      operation {
+        id
+        CreatorId
+        OperationName
+        Participants
+        createdAt
+        updatedAt
+      }
+      recordData
+      entryArray
+      exitArray
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onDeleteRecords = /* GraphQL */ `
+  subscription OnDeleteRecords($filter: ModelSubscriptionRecordsFilterInput) {
+    onDeleteRecords(filter: $filter) {
+      id
+      userId
+      operationId
+      operation {
+        id
+        CreatorId
+        OperationName
+        Participants
+        createdAt
+        updatedAt
+      }
+      recordData
+      entryArray
+      exitArray
       createdAt
       updatedAt
     }

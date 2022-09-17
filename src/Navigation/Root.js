@@ -7,6 +7,7 @@ import MapScreen from "../screens/MapScreen";
 import CustomDrawer from "./CostumDrawer";
 import CreateOperation1 from "../screens/CreateOperation1";
 import CreateOperation2 from "../screens/CreateOperation2";
+import RecordsScreen from "../screens/RecordsScreen";
 import AuthScreen from "../screens/AuthScreen";
 import GeofenceSettingsScreen from "../screens/GeofenceSettingsScreen";
 import { screenHeight, screenWidth } from "../constants/Dimensions";
@@ -81,22 +82,39 @@ const RootNavigator = (props) => {
           }
           }} />
            <Stack.Screen name="CreateOperation2" 
-        component={CreateOperation2} 
-        options={{
-          headerShown: true,
-          title: "New Operation",
-          headerTitleStyle: {
-            fontWeight: "bold",
-            fontSize: screenWidth > 400 ? 30 : 22
-          },
-          headerBackTitle: "Back",
-          headerBackTitleStyle: {
-            fontSize: screenWidth > 400 ? 26 : 18
-          },
-          headerStyle: {
-            height: screenHeight * 0.08
-          }
-          }} />
+            component={CreateOperation2} 
+            options={{
+              headerShown: true,
+              title: "New Operation",
+              headerTitleStyle: {
+                fontWeight: "bold",
+                fontSize: screenWidth > 400 ? 30 : 22
+              },
+              headerBackTitle: "Back",
+              headerBackTitleStyle: {
+                fontSize: screenWidth > 400 ? 26 : 18
+              },
+              headerStyle: {
+                height: screenWidth > 400 ? screenHeight * 0.08 : screenHeight * 0.11
+              }
+              }} />
+          <Stack.Screen name="Records" 
+            component={RecordsScreen} 
+            options={{
+              headerShown: true,
+              title: "Your travel records",
+              headerTitleStyle: {
+                fontWeight: "bold",
+                fontSize: screenWidth > 400 ? 30 : 22
+              },
+              headerBackTitle: "Back",
+              headerBackTitleStyle: {
+                fontSize: screenWidth > 400 ? 26 : 18
+              },
+              headerStyle: {
+                height: screenWidth > 400 ? screenHeight * 0.08 : screenHeight * 0.11
+              }
+              }} />
      
         <Stack.Screen 
         name="Home" 
